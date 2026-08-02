@@ -55,12 +55,6 @@ class BoardViewModel(
         }
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
 
-    val allCards: StateFlow<List<CardEntity>> = board
-        .flatMapLatest { b ->
-            if (b == null) flowOf(emptyList()) else boardRepository.observeAllCards(b.id)
-        }
-        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
-
     val settings: StateFlow<AppSettings> = settingsRepository.settings
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), AppSettings())
 
@@ -79,8 +73,8 @@ class BoardViewModel(
         _selectedCategoryId.value = id
     }
 
-    private val _sentence = MutableStateFlow<List<String>>(emptyList())
-    val sentence: StateFlow<List<String>> = _sentence.asStateFlow()
+    private val _sentence = MutableStateFlow("")
+    val sentence: StateFlow<String> = _sentence.asStateFlow()
 
     private val _editMode = MutableStateFlow(false)
     val editMode: StateFlow<Boolean> = _editMode.asStateFlow()
@@ -93,50 +87,40 @@ class BoardViewModel(
 
     fun onCardClick(card: CardEntity) {
         val phrase = cardPhrase(card)
-        _sentence.update { it + phrase }
+        _sentence.update { appendPhrase(it, phrase) }
         if (settings.value.autospeak) speak(phrase)
     }
 
     fun speakSentence() {
-        val text = _sentence.value.joinToString(" ")
+        val text = _sentence.value
         if (text.isBlank()) return
         speak(text)
-        _sentence.value = emptyList()
+        _sentence.value = ""
     }
 
     fun removeLastWord() {
-        _sentence.update { if (it.isEmpty()) it else it.dropLast(1) }
+        _sentence.update { text ->
+            val trimmed = text.trimEnd()
+            if (trimmed.isEmpty()) {
+                ""
+            } else {
+                val lastSpace = trimmed.lastIndexOf(' ')
+                if (lastSpace == -1) "" else trimmed.substring(0, lastSpace)
+            }
+        }
     }
 
     fun clearSentence() {
-        _sentence.value = emptyList()
+        _sentence.value = ""
     }
 
-    fun addTextToSentence(text: String) {
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) return
-        _sentence.update { it + trimmed }
+    fun setSentence(text: String) {
+        _sentence.value = text
     }
 
-    fun speakText(text: String) {
-        val trimmed = text.trim()
-        if (trimmed.isEmpty()) return
-        speak(trimmed)
-    }
-
-    /** Vocabulary words (labels in the active language) that start with [prefix]. */
-    fun predictWords(prefix: String, limit: Int = PREDICTION_LIMIT): List<String> {
-        val query = prefix.trim().lowercase()
-        if (query.isEmpty()) return emptyList()
-        val isSpanish = language.value == "es"
-        return allCards.value
-            .asSequence()
-            .map { if (isSpanish) it.labelEs else it.labelEn }
-            .map { it.lowercase() }
-            .distinct()
-            .filter { it.startsWith(query) && it != query }
-            .take(limit)
-            .toList()
+    private fun appendPhrase(current: String, phrase: String): String {
+        val trimmedCurrent = current.trimEnd()
+        return if (trimmedCurrent.isEmpty()) phrase.trim() else "$trimmedCurrent ${phrase.trim()}"
     }
 
     /** Inserts [card] if new, otherwise updates it. */
@@ -179,6 +163,5 @@ class BoardViewModel(
 
     companion object {
         const val DEFAULT_COLUMNS = 3
-        const val PREDICTION_LIMIT = 6
     }
 }

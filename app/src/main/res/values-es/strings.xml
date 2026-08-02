@@ -28,12 +28,10 @@
 
     <string name="no_cards">Aún no hay tarjetas en esta categoría</string>
 
-    <string name="sentence_hint">Toca tarjetas para formar una frase…</string>
+    <string name="sentence_hint">Escribe o toca tarjetas para formar una frase…</string>
     <string name="speak">Hablar</string>
     <string name="clear">Borrar</string>
     <string name="remove_last">Quitar última palabra</string>
-    <string name="type_text">Escribir texto</string>
-    <string name="add_to_sentence">Añadir</string>
 
     <string name="edit_board">Editar tablero</string>
     <string name="done_editing">Terminar edición</string>

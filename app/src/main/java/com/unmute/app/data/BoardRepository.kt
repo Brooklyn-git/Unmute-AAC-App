@@ -26,9 +26,6 @@ class BoardRepository(
     fun observeCards(categoryId: Long): Flow<List<CardEntity>> =
         cardDao.observeCards(categoryId)
 
-    fun observeAllCards(boardId: Long): Flow<List<CardEntity>> =
-        cardDao.observeAllCards(boardId)
-
     fun observeGridProfiles(): Flow<List<GridProfileEntity>> = gridProfileDao.observeAll()
 
     suspend fun insertCard(card: CardEntity): Long = cardDao.insert(card)

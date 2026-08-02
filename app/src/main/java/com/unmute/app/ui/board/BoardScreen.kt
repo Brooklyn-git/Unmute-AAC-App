@@ -1,6 +1,5 @@
 package com.unmute.app.ui.board
 
-import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -15,16 +14,15 @@ import androidx.compose.foundation.lazy.grid.GridCells
 import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items as lazyItems
-import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.Close
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Settings
@@ -45,11 +43,11 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
-import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
@@ -89,7 +87,6 @@ fun BoardScreen(
 
     val selectedCategory = categories.firstOrNull { it.id == selectedCategoryId }
     val effectiveCategoryId = selectedCategory?.id ?: categories.firstOrNull()?.id
-    var showTextInput by rememberSaveable { mutableStateOf(false) }
     var editingCard by remember { mutableStateOf<CardEntity?>(null) }
     var addingCard by remember { mutableStateOf(false) }
 
@@ -117,12 +114,6 @@ fun BoardScreen(
                     )
                 },
                 actions = {
-                    IconButton(onClick = { showTextInput = true }) {
-                        Icon(
-                            Icons.Default.Edit,
-                            contentDescription = stringResource(R.string.type_text),
-                        )
-                    }
                     IconButton(onClick = viewModel::toggleEditMode) {
                         Icon(
                             if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
@@ -150,7 +141,8 @@ fun BoardScreen(
                 .padding(innerPadding),
         ) {
             SentenceBar(
-                words = sentence,
+                sentence = sentence,
+                onSentenceChange = viewModel::setSentence,
                 onSpeak = viewModel::speakSentence,
                 onClear = viewModel::clearSentence,
                 onRemoveLast = viewModel::removeLastWord,
@@ -219,13 +211,6 @@ fun BoardScreen(
                 }
             }
         }
-    }
-
-    if (showTextInput) {
-        TextInputDialog(
-            viewModel = viewModel,
-            onDismiss = { showTextInput = false },
-        )
     }
 
     editingCard?.let { card ->
@@ -305,7 +290,8 @@ private fun CategoryTabs(
 
 @Composable
 private fun SentenceBar(
-    words: List<String>,
+    sentence: String,
+    onSentenceChange: (String) -> Unit,
     onSpeak: () -> Unit,
     onClear: () -> Unit,
     onRemoveLast: () -> Unit,
@@ -320,27 +306,32 @@ private fun SentenceBar(
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            val text = words.joinToString(" ")
-            Box(
-                modifier = Modifier
-                    .weight(1f)
-                    .horizontalScroll(rememberScrollState()),
-            ) {
-                Text(
-                    text = text.ifEmpty { stringResource(R.string.sentence_hint) },
-                    style = MaterialTheme.typography.headlineSmall,
-                    color = if (text.isEmpty()) {
-                        MaterialTheme.colorScheme.onSurfaceVariant
-                    } else {
-                        MaterialTheme.colorScheme.onSurface
-                    },
-                    modifier = Modifier.padding(horizontal = 8.dp),
-                )
-            }
-            IconButton(onClick = onRemoveLast, enabled = words.isNotEmpty()) {
+            BasicTextField(
+                value = sentence,
+                onValueChange = onSentenceChange,
+                singleLine = true,
+                textStyle = MaterialTheme.typography.headlineSmall.copy(
+                    color = MaterialTheme.colorScheme.onSurface,
+                ),
+                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                modifier = Modifier.weight(1f),
+                decorationBox = { innerTextField ->
+                    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                        if (sentence.isEmpty()) {
+                            Text(
+                                text = stringResource(R.string.sentence_hint),
+                                style = MaterialTheme.typography.headlineSmall,
+                                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                            )
+                        }
+                        innerTextField()
+                    }
+                },
+            )
+            IconButton(onClick = onRemoveLast, enabled = sentence.isNotEmpty()) {
                 Icon(Icons.Default.Backspace, contentDescription = stringResource(R.string.remove_last))
             }
-            IconButton(onClick = onClear, enabled = words.isNotEmpty()) {
+            IconButton(onClick = onClear, enabled = sentence.isNotEmpty()) {
                 Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
             }
             Surface(
@@ -348,7 +339,7 @@ private fun SentenceBar(
                 shape = RoundedCornerShape(50),
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                enabled = words.isNotEmpty(),
+                enabled = sentence.isNotEmpty(),
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
