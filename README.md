@@ -39,14 +39,12 @@ user.
 - **Autospeak**: the device can read each word aloud the moment you add it.
 - Hundreds of symbols and emoji to choose from, with English and Spanish labels.
 
-### Customizing the board (caregiver mode)
+### Customizing the board (edit mode)
 - Tap the **lock** to start editing.
 - **Reorder cards and sections** by holding and dragging them.
-- **Add cards** to any section — pick a symbol, an emoji, or a photo from your gallery, and choose a
-  color.
-- **Edit** any card's label and spoken phrase in both languages.
-- **Add sections** and **remove them** (the built-in default sections are protected and can't be
-  deleted).
+- **Add cards** to any section — pick a symbol, an emoji, or a photo, and choose a color.
+- **Edit** any card's icon, label and spoken phrase.
+- **Add** and **remove sections**.
 
 ### Layout & speech
 - **Grid profiles**: "Big" for few, large buttons; "Small" for a dense grid; plus your own custom
