@@ -9,6 +9,7 @@ import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutput
+import com.unmute.app.domain.model.CardFontSize
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -22,6 +23,7 @@ data class AppSettings(
     val speakOnAdd: Boolean = true,
     val speechRate: Float = 1f,
     val speechPitch: Float = 1f,
+    val cardFontSize: CardFontSize = CardFontSize.NORMAL,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -38,6 +40,9 @@ class SettingsRepository(private val context: Context) {
             speakOnAdd = prefs[KEY_SPEAK_ON_ADD] ?: true,
             speechRate = prefs[KEY_SPEECH_RATE] ?: 1f,
             speechPitch = prefs[KEY_SPEECH_PITCH] ?: 1f,
+            cardFontSize = prefs[KEY_CARD_FONT_SIZE]
+                ?.let { runCatching { CardFontSize.valueOf(it) }.getOrNull() }
+                ?: CardFontSize.NORMAL,
         )
     }
 
@@ -69,6 +74,10 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SPEECH_PITCH] = pitch }
     }
 
+    suspend fun setCardFontSize(size: CardFontSize) {
+        context.dataStore.edit { it[KEY_CARD_FONT_SIZE] = size.name }
+    }
+
     private companion object {
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_GRID_PROFILE = longPreferencesKey("active_grid_profile")
@@ -77,5 +86,6 @@ class SettingsRepository(private val context: Context) {
         val KEY_SPEAK_ON_ADD = booleanPreferencesKey("speak_on_add")
         val KEY_SPEECH_RATE = floatPreferencesKey("speech_rate")
         val KEY_SPEECH_PITCH = floatPreferencesKey("speech_pitch")
+        val KEY_CARD_FONT_SIZE = stringPreferencesKey("card_font_size")
     }
 }

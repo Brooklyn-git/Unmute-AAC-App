@@ -1,13 +1,16 @@
 package com.unmute.app
 
 import android.app.Application
+import coil.ImageLoader
+import coil.ImageLoaderFactory
+import coil.decode.SvgDecoder
 import com.unmute.app.data.AppContainer
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
 import kotlinx.coroutines.launch
 
-class UnmuteApplication : Application() {
+class UnmuteApplication : Application(), ImageLoaderFactory {
 
     lateinit var container: AppContainer
         private set
@@ -21,4 +24,9 @@ class UnmuteApplication : Application() {
             container.boardRepository.ensureSeeded()
         }
     }
+
+    override fun newImageLoader(): ImageLoader =
+        ImageLoader.Builder(this)
+            .components { add(SvgDecoder.Factory()) }
+            .build()
 }

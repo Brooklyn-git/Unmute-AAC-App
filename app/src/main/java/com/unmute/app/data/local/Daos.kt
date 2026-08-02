@@ -54,6 +54,12 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE categoryId = :categoryId ORDER BY orderIndex")
     fun observeCards(categoryId: Long): Flow<List<CardEntity>>
 
+    @Query(
+        "SELECT cards.* FROM cards INNER JOIN categories ON cards.categoryId = categories.id " +
+            "WHERE categories.boardId = :boardId ORDER BY categories.orderIndex, cards.orderIndex",
+    )
+    fun observeAllCards(boardId: Long): Flow<List<CardEntity>>
+
     @Query("SELECT * FROM cards WHERE categoryId = :categoryId ORDER BY orderIndex")
     suspend fun getCards(categoryId: Long): List<CardEntity>
 

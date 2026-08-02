@@ -1,4 +1,60 @@
 <?xml version="1.0" encoding="utf-8"?>
 <resources>
     <string name="app_name">Unmute</string>
+
+    <string name="settings">Ajustes</string>
+    <string name="back">Atrás</string>
+
+    <string name="language">Idioma</string>
+    <string name="language_system">Sistema</string>
+    <string name="language_english">Inglés</string>
+    <string name="language_spanish">Español</string>
+
+    <string name="grid_layout">Distribución de la cuadrícula</string>
+    <string name="grid_columns_format">%1$d columnas</string>
+    <string name="card_text_size">Tamaño del texto de tarjetas</string>
+    <string name="font_size_small">Pequeño</string>
+    <string name="font_size_normal">Normal</string>
+    <string name="font_size_large">Grande</string>
+    <string name="add_custom_layout">Añadir distribución personalizada</string>
+    <string name="new_layout">Nueva distribución</string>
+    <string name="edit_layout">Editar distribución</string>
+    <string name="name">Nombre</string>
+    <string name="columns">Columnas</string>
+    <string name="save">Guardar</string>
+    <string name="cancel">Cancelar</string>
+    <string name="delete">Eliminar</string>
+    <string name="edit">Editar</string>
+
+    <string name="no_cards">Aún no hay tarjetas en esta categoría</string>
+
+    <string name="sentence_hint">Toca tarjetas para formar una frase…</string>
+    <string name="speak">Hablar</string>
+    <string name="clear">Borrar</string>
+    <string name="remove_last">Quitar última palabra</string>
+    <string name="type_text">Escribir texto</string>
+    <string name="add_to_sentence">Añadir</string>
+
+    <string name="edit_board">Editar tablero</string>
+    <string name="done_editing">Terminar edición</string>
+    <string name="edit_card">Editar tarjeta</string>
+    <string name="add_card">Añadir tarjeta</string>
+    <string name="change_photo">Cambiar foto</string>
+    <string name="label_en">Etiqueta (inglés)</string>
+    <string name="label_es">Etiqueta (español)</string>
+    <string name="phrase_en">Frase (inglés)</string>
+    <string name="phrase_es">Frase (español)</string>
+    <string name="color">Color</string>
+
+    <string name="speech">Voz</string>
+    <string name="speech_rate">Velocidad de voz</string>
+    <string name="speech_pitch">Tono de voz</string>
+    <string name="autospeak">Hablar cada palabra al añadirla</string>
+    <string name="test_speech">Probar voz</string>
+
+    <string name="audio_output">Salida de audio</string>
+    <string name="audio_output_auto">Automática</string>
+    <string name="audio_output_speaker">Siempre altavoces</string>
+    <string name="audio_output_wired">Auriculares con cable</string>
+    <string name="audio_output_bluetooth">Auriculares Bluetooth</string>
 </resources>

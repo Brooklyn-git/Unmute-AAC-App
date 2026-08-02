@@ -2,6 +2,7 @@ package com.unmute.app.data
 
 import android.content.Context
 import com.unmute.app.data.local.UnmuteDatabase
+import com.unmute.app.tts.TtsManager
 
 class AppContainer(context: Context) {
 
@@ -15,4 +16,6 @@ class AppContainer(context: Context) {
     )
 
     val settingsRepository = SettingsRepository(context)
+
+    val ttsManager = TtsManager(context)
 }

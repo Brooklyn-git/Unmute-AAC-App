@@ -26,7 +26,16 @@ class BoardRepository(
     fun observeCards(categoryId: Long): Flow<List<CardEntity>> =
         cardDao.observeCards(categoryId)
 
+    fun observeAllCards(boardId: Long): Flow<List<CardEntity>> =
+        cardDao.observeAllCards(boardId)
+
     fun observeGridProfiles(): Flow<List<GridProfileEntity>> = gridProfileDao.observeAll()
+
+    suspend fun insertCard(card: CardEntity): Long = cardDao.insert(card)
+
+    suspend fun updateCard(card: CardEntity) = cardDao.update(card)
+
+    suspend fun deleteCard(card: CardEntity) = cardDao.delete(card)
 
     /** Seeds the default board and grid profiles if the database is empty. */
     suspend fun ensureSeeded() {
@@ -78,6 +87,23 @@ class BoardRepository(
         gridProfileDao.insert(
             GridProfileEntity(id = SMALL_PROFILE_ID, name = "Small", columns = 6, isPreset = true),
         )
+    }
+
+    suspend fun insertGridProfile(name: String, columns: Int): Long =
+        gridProfileDao.insert(
+            GridProfileEntity(name = name, columns = columns, isPreset = false),
+        )
+
+    suspend fun updateGridProfile(id: Long, name: String, columns: Int) {
+        val existing = gridProfileDao.getById(id) ?: return
+        if (existing.isPreset) return
+        gridProfileDao.update(existing.copy(name = name, columns = columns))
+    }
+
+    suspend fun deleteGridProfile(id: Long) {
+        val existing = gridProfileDao.getById(id) ?: return
+        if (existing.isPreset) return
+        gridProfileDao.delete(existing)
     }
 
     companion object {
