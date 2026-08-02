@@ -1,6 +1,7 @@
 package com.unmute.app.tts
 
 import android.content.Context
+import android.content.Intent
 import android.media.AudioAttributes
 import android.media.AudioDeviceInfo
 import android.media.AudioFormat
@@ -9,25 +10,37 @@ import android.media.AudioTrack
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.speech.tts.TextToSpeech
+import android.speech.tts.UtteranceProgressListener
 import android.util.Log
 import com.unmute.app.domain.model.AudioOutputIds
 import java.io.FileInputStream
 import java.util.Locale
+import java.util.concurrent.atomic.AtomicReference
 import kotlinx.coroutines.Dispatchers
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableSharedFlow
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asSharedFlow
 import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
+enum class TtsIssue { UNAVAILABLE, SPEAK_FAILED }
+
 /**
- * Speaks text through an [AudioTrack] we own, so the output device can be forced
- * (e.g. to the speakers while headphones are plugged in). Android's TextToSpeech
- * cannot route to a specific device directly, so speech is synthesized into a
- * pipe and played back through our own track. If that fails, we fall back to the
- * engine's normal [TextToSpeech.speak] so the user always gets sound.
+ * Speaks through the user's default TTS engine. Android's TextToSpeech cannot
+ * route to a specific output device, so when the user picks a concrete device we
+ * synthesize into a pipe, play it through our own [AudioTrack] and force the
+ * device. Otherwise we use the engine's normal [TextToSpeech.speak], which is
+ * the most reliable path and always honours the system's default engine.
  */
-class TtsManager(context: Context) {
+class TtsManager(
+    context: Context,
+    initialEngine: String? = null,
+) {
 
     private val appContext = context.applicationContext
     private val audioManager = appContext.getSystemService(AudioManager::class.java)
@@ -35,12 +48,16 @@ class TtsManager(context: Context) {
     private val _isReady = MutableStateFlow(false)
     val isReady: StateFlow<Boolean> = _isReady.asStateFlow()
 
+    private val _errors = MutableSharedFlow<TtsIssue>(extraBufferCapacity = 8)
+    val errors: SharedFlow<TtsIssue> = _errors.asSharedFlow()
+
     private var tts: TextToSpeech? = null
+    private var initStatus = TextToSpeech.ERROR
+    private var selectedEngine: String? = initialEngine
+    private val startedUtterance = AtomicReference<String?>(null)
 
     init {
-        tts = TextToSpeech(appContext) { status ->
-            _isReady.value = status == TextToSpeech.SUCCESS
-        }
+        initEngine(initialEngine)
     }
 
     fun shutdown() {
@@ -48,6 +65,51 @@ class TtsManager(context: Context) {
         tts?.shutdown()
         tts = null
     }
+
+    /** Installed TTS engines as (packageName, label), independent of which one is selected. */
+    fun engines(): List<Pair<String, String>> {
+        val intent = Intent(TextToSpeech.Engine.INTENT_ACTION_TTS_SERVICE)
+        return appContext.packageManager.queryIntentServices(intent, 0).map { service ->
+            val packageName = service.serviceInfo.packageName
+            packageName to (resolveEngineLabel(packageName) ?: packageName)
+        }
+    }
+
+    /** Re-initializes speech with [packageName], or the system default when null. */
+    fun selectEngine(packageName: String?) {
+        initEngine(packageName)
+    }
+
+    private fun initEngine(packageName: String?) {
+        tts?.stop()
+        tts?.shutdown()
+        tts = null
+        selectedEngine = packageName
+        _isReady.value = false
+        tts = if (packageName == null) {
+            TextToSpeech(appContext, ::onInit)
+        } else {
+            TextToSpeech(appContext, ::onInit, packageName)
+        }
+    }
+
+    private fun onInit(status: Int) {
+        initStatus = status
+        _isReady.value = status == TextToSpeech.SUCCESS
+        Log.i(TAG, "TTS init status=$status engine=$selectedEngine")
+    }
+
+    /** Display name of the engine in use, or null if unavailable. */
+    fun currentEngineLabel(): String? {
+        val packageName = selectedEngine ?: tts?.defaultEngine ?: return null
+        return resolveEngineLabel(packageName) ?: packageName
+    }
+
+    private fun resolveEngineLabel(packageName: String): String? =
+        runCatching {
+            val info = appContext.packageManager.getApplicationInfo(packageName, 0)
+            appContext.packageManager.getApplicationLabel(info).toString()
+        }.getOrNull()
 
     /** Connected output devices the user can route speech to, as (deviceId, label). */
     fun availableOutputs(): List<Pair<String, String>> {
@@ -62,25 +124,97 @@ class TtsManager(context: Context) {
     /** Synthesizes [text] and plays it, forcing the given [outputId] device when possible. */
     suspend fun speak(text: String, language: String, outputId: String, rate: Float, pitch: Float): Boolean =
         withContext(Dispatchers.IO) {
-            val engine = tts ?: return@withContext false
-            engine.language = Locale.forLanguageTag(if (language == "es") "es" else "en")
+            val engine = tts
+            if (engine == null) {
+                Log.e(TAG, "TTS engine missing")
+                _errors.emit(TtsIssue.UNAVAILABLE)
+                return@withContext false
+            }
+            if (withTimeoutOrNull(ENGINE_READY_TIMEOUT_MILLIS) { _isReady.first { it } } == null) {
+                Log.e(TAG, "TTS engine not ready, init status=$initStatus")
+                _errors.emit(TtsIssue.UNAVAILABLE)
+                return@withContext false
+            }
+
+            configureLanguage(engine, language)
             engine.setSpeechRate(rate)
             engine.setPitch(pitch)
+            installListener(engine)
 
             val device = resolvePreferredDevice(outputId)
-            val spoken = try {
-                speakThroughTrack(engine, text, device)
-            } catch (t: Throwable) {
-                Log.e(TAG, "Custom TTS playback failed", t)
-                false
+            if (device != null && speakThroughTrackSafely(engine, text, device)) {
+                return@withContext true
             }
-            if (spoken) {
-                true
-            } else {
-                Log.w(TAG, "Custom TTS playback unavailable, falling back to system speech")
-                engine.speak(text, TextToSpeech.QUEUE_FLUSH, null, UTTERANCE_ID)
-                true
+
+            if (speakViaEngine(engine, text)) {
+                return@withContext true
             }
+
+            Log.w(TAG, "engine.speak reported success but produced no audio, trying own playback")
+            if (speakThroughTrackSafely(engine, text, device)) {
+                return@withContext true
+            }
+
+            Log.e(TAG, "No TTS playback path produced sound")
+            _errors.emit(TtsIssue.SPEAK_FAILED)
+            false
+        }
+
+    private suspend fun speakThroughTrackSafely(engine: TextToSpeech, text: String, device: AudioDeviceInfo?): Boolean =
+        try {
+            speakThroughTrack(engine, text, device)
+        } catch (t: Throwable) {
+            Log.e(TAG, "Custom TTS playback failed", t)
+            false
+        }
+
+    /** Speaks natively and returns true only if the engine actually started the utterance. */
+    private suspend fun speakViaEngine(engine: TextToSpeech, text: String): Boolean {
+        startedUtterance.set(null)
+        val result = engine.speak(text, TextToSpeech.QUEUE_FLUSH, speechParams(), UTTERANCE_ID)
+        if (result != TextToSpeech.SUCCESS) {
+            Log.e(TAG, "engine.speak returned $result")
+            return false
+        }
+        return withTimeoutOrNull(UTTERANCE_START_TIMEOUT_MILLIS) {
+            while (startedUtterance.get() != UTTERANCE_ID) {
+                delay(UTTERANCE_POLL_MS)
+            }
+        } != null
+    }
+
+    private fun configureLanguage(engine: TextToSpeech, language: String) {
+        val locale = Locale.forLanguageTag(if (language == "es") "es" else "en")
+        val result = engine.setLanguage(locale)
+        if (result == TextToSpeech.LANG_MISSING_DATA || result == TextToSpeech.LANG_NOT_SUPPORTED) {
+            Log.w(TAG, "Language $locale unsupported by engine, falling back to default")
+            engine.setLanguage(Locale.getDefault())
+        }
+    }
+
+    private fun installListener(engine: TextToSpeech) {
+        engine.setOnUtteranceProgressListener(object : UtteranceProgressListener() {
+            override fun onStart(utteranceId: String?) {
+                startedUtterance.set(utteranceId)
+            }
+
+            override fun onDone(utteranceId: String?) = Unit
+
+            @Deprecated("Deprecated in Java")
+            override fun onError(utteranceId: String?) {
+                Log.e(TAG, "Utterance error: $utteranceId")
+            }
+
+            override fun onError(utteranceId: String?, errorCode: Int) {
+                Log.e(TAG, "Utterance error $utteranceId code=$errorCode")
+            }
+        })
+    }
+
+    private fun speechParams(): Bundle =
+        Bundle().apply {
+            putInt(TextToSpeech.Engine.KEY_PARAM_STREAM, AudioManager.STREAM_MUSIC)
+            putFloat(TextToSpeech.Engine.KEY_PARAM_VOLUME, 1f)
         }
 
     private suspend fun speakThroughTrack(engine: TextToSpeech, text: String, device: AudioDeviceInfo?): Boolean {
@@ -186,6 +320,9 @@ class TtsManager(context: Context) {
         const val SAMPLE_RATE = 22050
         const val UTTERANCE_ID = "unmute_utterance"
         const val SYNTHESIS_TIMEOUT_MILLIS = 15_000L
+        const val ENGINE_READY_TIMEOUT_MILLIS = 5_000L
+        const val UTTERANCE_START_TIMEOUT_MILLIS = 2_500L
+        const val UTTERANCE_POLL_MS = 50L
         const val PLAYBACK_POLL_MS = 50L
 
         val SUPPORTED_DEVICE_TYPES = intArrayOf(

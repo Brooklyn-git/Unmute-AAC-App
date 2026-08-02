@@ -51,6 +51,10 @@
     <string name="speech_pitch">Tono de voz</string>
     <string name="autospeak">Hablar cada palabra al añadirla</string>
     <string name="test_speech">Probar voz</string>
+    <string name="tts">TTS</string>
+    <string name="tts_system_default">Predeterminado del sistema</string>
+    <string name="tts_error_unavailable">El TTS no está disponible. Establece un motor de voz en los ajustes.</string>
+    <string name="tts_error_failed">El TTS no pudo hablar. Revisa los ajustes de TTS.</string>
 
     <string name="audio_output">Salida de audio</string>
     <string name="audio_output_auto">Automática</string>

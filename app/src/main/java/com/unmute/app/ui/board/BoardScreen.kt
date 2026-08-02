@@ -34,6 +34,8 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Scaffold
+import androidx.compose.material3.SnackbarHost
+import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
 import androidx.compose.material3.TopAppBar
@@ -48,6 +50,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
@@ -59,6 +62,7 @@ import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.label
+import com.unmute.app.tts.TtsIssue
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -89,7 +93,20 @@ fun BoardScreen(
     var editingCard by remember { mutableStateOf<CardEntity?>(null) }
     var addingCard by remember { mutableStateOf(false) }
 
+    val context = LocalContext.current
+    val snackbarHostState = remember { SnackbarHostState() }
+    LaunchedEffect(viewModel) {
+        viewModel.ttsErrors.collect { issue ->
+            val message = when (issue) {
+                TtsIssue.UNAVAILABLE -> context.getString(R.string.tts_error_unavailable)
+                TtsIssue.SPEAK_FAILED -> context.getString(R.string.tts_error_failed)
+            }
+            snackbarHostState.showSnackbar(message)
+        }
+    }
+
     Scaffold(
+        snackbarHost = { SnackbarHost(snackbarHostState) },
         topBar = {
             TopAppBar(
                 title = {

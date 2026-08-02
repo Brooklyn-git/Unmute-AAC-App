@@ -19,6 +19,7 @@ data class AppSettings(
     val language: AppLanguage = AppLanguage.SYSTEM,
     val activeGridProfileId: Long = BoardRepository.BIG_PROFILE_ID,
     val audioOutput: String = AudioOutputIds.AUTO,
+    val ttsEngine: String? = null,
     val autospeak: Boolean = false,
     val speakOnAdd: Boolean = true,
     val speechRate: Float = 1f,
@@ -34,6 +35,7 @@ class SettingsRepository(private val context: Context) {
                 ?: AppLanguage.SYSTEM,
             activeGridProfileId = prefs[KEY_GRID_PROFILE] ?: BoardRepository.BIG_PROFILE_ID,
             audioOutput = prefs[KEY_AUDIO_OUTPUT] ?: AudioOutputIds.AUTO,
+            ttsEngine = prefs[KEY_TTS_ENGINE],
             autospeak = prefs[KEY_AUTOSPEAK] ?: false,
             speakOnAdd = prefs[KEY_SPEAK_ON_ADD] ?: true,
             speechRate = prefs[KEY_SPEECH_RATE] ?: 1f,
@@ -54,6 +56,16 @@ class SettingsRepository(private val context: Context) {
 
     suspend fun setAudioOutput(outputId: String) {
         context.dataStore.edit { it[KEY_AUDIO_OUTPUT] = outputId }
+    }
+
+    suspend fun setTtsEngine(packageName: String?) {
+        context.dataStore.edit { prefs ->
+            if (packageName == null) {
+                prefs.remove(KEY_TTS_ENGINE)
+            } else {
+                prefs[KEY_TTS_ENGINE] = packageName
+            }
+        }
     }
 
     suspend fun setAutospeak(enabled: Boolean) {
@@ -80,6 +92,7 @@ class SettingsRepository(private val context: Context) {
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_GRID_PROFILE = longPreferencesKey("active_grid_profile")
         val KEY_AUDIO_OUTPUT = stringPreferencesKey("audio_output")
+        val KEY_TTS_ENGINE = stringPreferencesKey("tts_engine")
         val KEY_AUTOSPEAK = booleanPreferencesKey("autospeak")
         val KEY_SPEAK_ON_ADD = booleanPreferencesKey("speak_on_add")
         val KEY_SPEECH_RATE = floatPreferencesKey("speech_rate")

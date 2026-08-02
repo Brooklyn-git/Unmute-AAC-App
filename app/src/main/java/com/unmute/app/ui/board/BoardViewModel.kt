@@ -11,11 +11,13 @@ import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.resolveLanguage
+import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
 import com.unmute.app.util.PhotoStore
 import java.util.Locale
 import kotlinx.coroutines.ExperimentalCoroutinesApi
 import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.asStateFlow
@@ -82,6 +84,8 @@ class BoardViewModel(
 
     private val _editMode = MutableStateFlow(false)
     val editMode: StateFlow<Boolean> = _editMode.asStateFlow()
+
+    val ttsErrors: SharedFlow<TtsIssue> = ttsManager.errors
 
     fun toggleEditMode() {
         _editMode.value = !_editMode.value

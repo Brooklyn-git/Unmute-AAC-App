@@ -51,6 +51,10 @@
     <string name="speech_pitch">Speech pitch</string>
     <string name="autospeak">Speak each word as added</string>
     <string name="test_speech">Test speech</string>
+    <string name="tts">TTS</string>
+    <string name="tts_system_default">System default</string>
+    <string name="tts_error_unavailable">TTS isn\'t available. Set a text-to-speech engine in Settings.</string>
+    <string name="tts_error_failed">TTS couldn\'t speak. Check your TTS settings.</string>
 
     <string name="audio_output">Audio output</string>
     <string name="audio_output_auto">Automatic</string>

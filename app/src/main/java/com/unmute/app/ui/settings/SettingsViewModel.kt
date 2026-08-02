@@ -9,8 +9,10 @@ import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.resolveLanguage
+import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
 import java.util.Locale
+import kotlinx.coroutines.flow.SharedFlow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.stateIn
@@ -27,6 +29,8 @@ class SettingsViewModel(
 
     val gridProfiles: StateFlow<List<GridProfileEntity>> = boardRepository.observeGridProfiles()
         .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), emptyList())
+
+    val ttsErrors: SharedFlow<TtsIssue> = ttsManager.errors
 
     fun selectGridProfile(id: Long) {
         viewModelScope.launch { settingsRepository.setActiveGridProfile(id) }
@@ -70,6 +74,17 @@ class SettingsViewModel(
     }
 
     fun availableOutputs(): List<Pair<String, String>> = ttsManager.availableOutputs()
+
+    fun ttsEngineLabel(): String? = ttsManager.currentEngineLabel()
+
+    fun availableTtsEngines(): List<Pair<String, String>> = ttsManager.engines()
+
+    fun selectTtsEngine(packageName: String?) {
+        viewModelScope.launch {
+            settingsRepository.setTtsEngine(packageName)
+            ttsManager.selectEngine(packageName)
+        }
+    }
 
     fun setAutospeak(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setAutospeak(enabled) }
