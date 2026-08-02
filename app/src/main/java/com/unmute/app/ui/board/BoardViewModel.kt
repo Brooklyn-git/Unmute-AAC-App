@@ -73,6 +73,65 @@ class BoardViewModel(
         _selectedCategoryId.value = id
     }
 
+    fun selectGridProfile(id: Long) {
+        viewModelScope.launch { settingsRepository.setActiveGridProfile(id) }
+    }
+
+    fun addGridProfile(name: String, columns: Int) {
+        viewModelScope.launch {
+            boardRepository.insertGridProfile(
+                name = name.ifBlank { BoardRepository.DEFAULT_CUSTOM_NAME },
+                columns = columns.coerceIn(BoardRepository.MIN_COLUMNS, BoardRepository.MAX_COLUMNS),
+            )
+        }
+    }
+
+    fun updateGridProfile(id: Long, name: String, columns: Int) {
+        viewModelScope.launch {
+            boardRepository.updateGridProfile(
+                id = id,
+                name = name.ifBlank { BoardRepository.DEFAULT_CUSTOM_NAME },
+                columns = columns.coerceIn(BoardRepository.MIN_COLUMNS, BoardRepository.MAX_COLUMNS),
+            )
+        }
+    }
+
+    fun deleteGridProfile(id: Long) {
+        viewModelScope.launch {
+            val activeId = settings.value.activeGridProfileId
+            boardRepository.deleteGridProfile(id)
+            if (activeId == id) {
+                settingsRepository.setActiveGridProfile(BoardRepository.BIG_PROFILE_ID)
+            }
+        }
+    }
+
+    /** Adds [delta] columns to the active grid profile, creating a custom copy if it is a preset. */
+    fun adjustActiveColumns(delta: Int) {
+        viewModelScope.launch {
+            val activeId = settings.value.activeGridProfileId
+            val active = gridProfiles.value.firstOrNull { it.id == activeId }
+            val current = active?.columns ?: DEFAULT_COLUMNS
+            val newColumns = (current + delta).coerceIn(BoardRepository.MIN_COLUMNS, BoardRepository.MAX_COLUMNS)
+            if (newColumns == current) return@launch
+            val targetId = if (active != null && !active.isPreset) {
+                active.id
+            } else {
+                val newId = boardRepository.insertGridProfile(
+                    name = BoardRepository.DEFAULT_CUSTOM_NAME,
+                    columns = current,
+                )
+                settingsRepository.setActiveGridProfile(newId)
+                newId
+            }
+            boardRepository.updateGridProfile(
+                id = targetId,
+                name = active?.name ?: BoardRepository.DEFAULT_CUSTOM_NAME,
+                columns = newColumns,
+            )
+        }
+    }
+
     private val _sentence = MutableStateFlow("")
     val sentence: StateFlow<String> = _sentence.asStateFlow()
 

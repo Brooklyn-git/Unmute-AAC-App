@@ -138,5 +138,8 @@ class BoardRepository(
     companion object {
         const val BIG_PROFILE_ID = 1L
         const val SMALL_PROFILE_ID = 2L
+        const val DEFAULT_CUSTOM_NAME = "Custom"
+        const val MIN_COLUMNS = 1
+        const val MAX_COLUMNS = 10
     }
 }

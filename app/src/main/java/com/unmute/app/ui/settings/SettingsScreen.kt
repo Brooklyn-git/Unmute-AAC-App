@@ -10,23 +10,17 @@ import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
-import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.ArrowDropDown
-import androidx.compose.material.icons.filled.Delete
-import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.HorizontalDivider
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
-import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
 import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
@@ -55,7 +49,6 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unmute.app.R
-import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.domain.model.CardFontSize
@@ -68,8 +61,6 @@ fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
-    val profiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
-    var dialog by remember { mutableStateOf<GridProfileDialogState?>(null) }
 
     val context = LocalContext.current
     var ttsEngineLabel by remember { mutableStateOf<String?>(null) }
@@ -134,38 +125,6 @@ fun SettingsScreen(
                     selected = settings.language == AppLanguage.ES,
                     onClick = { viewModel.setLanguage(AppLanguage.ES) },
                 )
-            }
-
-            item { SectionHeader(stringResource(R.string.grid_layout)) }
-            items(profiles, key = { it.id }) { profile ->
-                GridProfileRow(
-                    profile = profile,
-                    isActive = profile.id == settings.activeGridProfileId,
-                    onSelect = { viewModel.selectGridProfile(profile.id) },
-                    onEdit = {
-                        dialog = GridProfileDialogState.Edit(profile)
-                    },
-                    onDelete = { viewModel.deleteProfile(profile.id) },
-                )
-            }
-            item {
-                val active = profiles.firstOrNull { it.id == settings.activeGridProfileId }
-                OutlinedButton(
-                    onClick = {
-                        dialog = GridProfileDialogState.Create(
-                            base = active ?: profiles.first(),
-                        )
-                    },
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(horizontal = 16.dp, vertical = 8.dp),
-                ) {
-                    Icon(Icons.Default.Add, contentDescription = null)
-                    Text(
-                        text = stringResource(R.string.add_custom_layout),
-                        modifier = Modifier.padding(start = 8.dp),
-                    )
-                }
             }
 
             item { SectionHeader(stringResource(R.string.card_text_size)) }
@@ -241,49 +200,6 @@ fun SettingsScreen(
                 }
             }
         }
-    }
-
-    val state = dialog
-    when (state) {
-        is GridProfileDialogState.Create -> {
-            val base = state.base
-            GridProfileDialog(
-                title = stringResource(R.string.new_layout),
-                initialName = "",
-                initialColumns = base.columns,
-                columnRange = SettingsViewModel.MIN_COLUMNS..SettingsViewModel.MAX_COLUMNS,
-                nameLabel = stringResource(R.string.name),
-                columnsLabel = stringResource(R.string.columns),
-                saveLabel = stringResource(R.string.save),
-                cancelLabel = stringResource(R.string.cancel),
-                onConfirm = { name, columns ->
-                    viewModel.addCustomProfile(base, name, columns)
-                    dialog = null
-                },
-                onDismiss = { dialog = null },
-            )
-        }
-
-        is GridProfileDialogState.Edit -> {
-            val profile = state.profile
-            GridProfileDialog(
-                title = stringResource(R.string.edit_layout),
-                initialName = profile.name,
-                initialColumns = profile.columns,
-                columnRange = SettingsViewModel.MIN_COLUMNS..SettingsViewModel.MAX_COLUMNS,
-                nameLabel = stringResource(R.string.name),
-                columnsLabel = stringResource(R.string.columns),
-                saveLabel = stringResource(R.string.save),
-                cancelLabel = stringResource(R.string.cancel),
-                onConfirm = { name, columns ->
-                    viewModel.updateProfile(profile.id, name, columns)
-                    dialog = null
-                },
-                onDismiss = { dialog = null },
-            )
-        }
-
-        null -> Unit
     }
 }
 
@@ -364,47 +280,6 @@ private fun TtsEngineDropdown(
                 .clickable { expanded = true },
         )
     }
-}
-
-@Composable
-private fun GridProfileRow(
-    profile: GridProfileEntity,
-    isActive: Boolean,
-    onSelect: () -> Unit,
-    onEdit: () -> Unit,
-    onDelete: () -> Unit,
-) {
-    val columnsLabel = stringResource(R.string.grid_columns_format, profile.columns)
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onSelect)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = isActive, onClick = onSelect)
-        Column(modifier = Modifier.weight(1f)) {
-            Text(
-                text = profile.name,
-                style = MaterialTheme.typography.bodyLarge,
-                fontWeight = if (isActive) FontWeight.Bold else FontWeight.Normal,
-            )
-            Text(
-                text = columnsLabel,
-                style = MaterialTheme.typography.bodySmall,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
-            )
-        }
-        if (!profile.isPreset) {
-            IconButton(onClick = onEdit) {
-                Icon(Icons.Default.Edit, contentDescription = stringResource(R.string.edit))
-            }
-            IconButton(onClick = onDelete) {
-                Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
-            }
-        }
-    }
-    HorizontalDivider(modifier = Modifier.padding(start = 8.dp, end = 8.dp))
 }
 
 @Composable
@@ -494,8 +369,3 @@ private val MIN_SPEECH_RATE = 0.5f
 private val MAX_SPEECH_RATE = 2.0f
 private val MIN_SPEECH_PITCH = 0.5f
 private val MAX_SPEECH_PITCH = 2.0f
-
-private sealed interface GridProfileDialogState {
-    data class Create(val base: GridProfileEntity) : GridProfileDialogState
-    data class Edit(val profile: GridProfileEntity) : GridProfileDialogState
-}

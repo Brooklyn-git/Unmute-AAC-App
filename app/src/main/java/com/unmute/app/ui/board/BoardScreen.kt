@@ -11,6 +11,7 @@ import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Clear
+import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Settings
@@ -63,6 +64,7 @@ fun BoardScreen(
     val sentence by viewModel.sentence.collectAsStateWithLifecycle()
     val editMode by viewModel.editMode.collectAsStateWithLifecycle()
     val columns by viewModel.activeColumns.collectAsStateWithLifecycle()
+    val gridProfiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val cardFontSize by viewModel.settings.collectAsStateWithLifecycle()
 
@@ -77,6 +79,7 @@ fun BoardScreen(
     var editingCard by remember { mutableStateOf<CardEntity?>(null) }
     var addingCard by remember { mutableStateOf(false) }
     var addingSection by remember { mutableStateOf(false) }
+    var showGridEditor by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -102,6 +105,14 @@ fun BoardScreen(
                     )
                 },
                 actions = {
+                    if (editMode) {
+                        IconButton(onClick = { showGridEditor = true }) {
+                            Icon(
+                                Icons.Default.GridView,
+                                contentDescription = stringResource(R.string.grid_layout),
+                            )
+                        }
+                    }
                     IconButton(onClick = viewModel::toggleEditMode) {
                         Icon(
                             if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
@@ -214,6 +225,20 @@ fun BoardScreen(
                 addingSection = false
             },
             onDismiss = { addingSection = false },
+        )
+    }
+
+    if (showGridEditor) {
+        GridEditorSheet(
+            profiles = gridProfiles,
+            activeProfileId = cardFontSize.activeGridProfileId,
+            activeColumns = columns,
+            onSelectProfile = viewModel::selectGridProfile,
+            onAdjustColumns = viewModel::adjustActiveColumns,
+            onAddProfile = viewModel::addGridProfile,
+            onEditProfile = viewModel::updateGridProfile,
+            onDeleteProfile = viewModel::deleteGridProfile,
+            onDismiss = { showGridEditor = false },
         )
     }
 }

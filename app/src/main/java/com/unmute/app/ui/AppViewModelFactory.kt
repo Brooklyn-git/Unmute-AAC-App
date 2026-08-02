@@ -21,7 +21,6 @@ class AppViewModelFactory(private val container: AppContainer) : ViewModelProvid
         modelClass.isAssignableFrom(SettingsViewModel::class.java) ->
             SettingsViewModel(
                 container.settingsRepository,
-                container.boardRepository,
                 container.ttsManager,
             ) as T
 

@@ -12,6 +12,9 @@
 
     <string name="grid_layout">Distribución de la cuadrícula</string>
     <string name="grid_columns_format">%1$d columnas</string>
+    <string name="add_columns">Añadir columnas</string>
+    <string name="remove_columns">Quitar columnas</string>
+    <string name="done">Listo</string>
     <string name="card_text_size">Tamaño del texto de tarjetas</string>
     <string name="font_size_small">Pequeño</string>
     <string name="font_size_normal">Normal</string>
