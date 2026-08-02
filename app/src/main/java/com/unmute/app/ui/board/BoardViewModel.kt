@@ -166,7 +166,7 @@ class BoardViewModel(
             ttsManager.speak(
                 text = text,
                 language = language.value,
-                output = s.audioOutput,
+                outputId = s.audioOutput,
                 rate = s.speechRate,
                 pitch = s.speechPitch,
             )

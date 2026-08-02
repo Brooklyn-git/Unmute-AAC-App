@@ -6,11 +6,9 @@ enum class ImageType {
     EMOJI,
 }
 
-enum class AudioOutput {
-    AUTO,
-    SPEAKER,
-    WIRED,
-    BLUETOOTH,
+/** Sentinel value for "let the system pick the output device". */
+object AudioOutputIds {
+    const val AUTO = "auto"
 }
 
 enum class AppLanguage {

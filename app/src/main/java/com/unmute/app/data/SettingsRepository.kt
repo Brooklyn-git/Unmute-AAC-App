@@ -8,7 +8,7 @@ import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import com.unmute.app.domain.model.AppLanguage
-import com.unmute.app.domain.model.AudioOutput
+import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.domain.model.CardFontSize
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
@@ -18,7 +18,7 @@ private val Context.dataStore by preferencesDataStore(name = "settings")
 data class AppSettings(
     val language: AppLanguage = AppLanguage.SYSTEM,
     val activeGridProfileId: Long = BoardRepository.BIG_PROFILE_ID,
-    val audioOutput: AudioOutput = AudioOutput.SPEAKER,
+    val audioOutput: String = AudioOutputIds.AUTO,
     val autospeak: Boolean = false,
     val speakOnAdd: Boolean = true,
     val speechRate: Float = 1f,
@@ -33,9 +33,7 @@ class SettingsRepository(private val context: Context) {
             language = prefs[KEY_LANGUAGE]?.let { runCatching { AppLanguage.valueOf(it) }.getOrNull() }
                 ?: AppLanguage.SYSTEM,
             activeGridProfileId = prefs[KEY_GRID_PROFILE] ?: BoardRepository.BIG_PROFILE_ID,
-            audioOutput = prefs[KEY_AUDIO_OUTPUT]
-                ?.let { runCatching { AudioOutput.valueOf(it) }.getOrNull() }
-                ?: AudioOutput.SPEAKER,
+            audioOutput = prefs[KEY_AUDIO_OUTPUT] ?: AudioOutputIds.AUTO,
             autospeak = prefs[KEY_AUTOSPEAK] ?: false,
             speakOnAdd = prefs[KEY_SPEAK_ON_ADD] ?: true,
             speechRate = prefs[KEY_SPEECH_RATE] ?: 1f,
@@ -54,8 +52,8 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_GRID_PROFILE] = id }
     }
 
-    suspend fun setAudioOutput(output: AudioOutput) {
-        context.dataStore.edit { it[KEY_AUDIO_OUTPUT] = output.name }
+    suspend fun setAudioOutput(outputId: String) {
+        context.dataStore.edit { it[KEY_AUDIO_OUTPUT] = outputId }
     }
 
     suspend fun setAutospeak(enabled: Boolean) {

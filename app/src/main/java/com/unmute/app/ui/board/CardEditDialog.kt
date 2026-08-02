@@ -52,14 +52,15 @@ private val COLOR_SWATCHES = listOf(
 @Composable
 fun CardEditDialog(
     card: CardEntity,
+    language: String,
+    isNew: Boolean,
     onSave: (CardEntity) -> Unit,
     onDismiss: () -> Unit,
 ) {
     val context = LocalContext.current
-    var labelEn by remember(card.id) { mutableStateOf(card.labelEn) }
-    var labelEs by remember(card.id) { mutableStateOf(card.labelEs) }
-    var phraseEn by remember(card.id) { mutableStateOf(card.phraseEn) }
-    var phraseEs by remember(card.id) { mutableStateOf(card.phraseEs) }
+    val isSpanish = language == "es"
+    var label by remember(card.id) { mutableStateOf(if (isSpanish) card.labelEs else card.labelEn) }
+    var phrase by remember(card.id) { mutableStateOf(if (isSpanish) card.phraseEs else card.phraseEn) }
     var selectedColor by remember(card.id) { mutableStateOf(card.color) }
     var photoPath by remember(card.id) {
         mutableStateOf(card.imageValue.takeIf { card.imageType == ImageType.PHOTO })
@@ -110,29 +111,20 @@ fun CardEditDialog(
                 }
 
                 OutlinedTextField(
-                    value = labelEn,
-                    onValueChange = { labelEn = it },
-                    label = { Text(stringResource(R.string.label_en)) },
+                    value = label,
+                    onValueChange = { label = it },
+                    label = {
+                        Text(stringResource(if (isSpanish) R.string.label_es else R.string.label_en))
+                    },
                     singleLine = true,
                     modifier = Modifier.fillMaxWidth(),
                 )
                 OutlinedTextField(
-                    value = labelEs,
-                    onValueChange = { labelEs = it },
-                    label = { Text(stringResource(R.string.label_es)) },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = phraseEn,
-                    onValueChange = { phraseEn = it },
-                    label = { Text(stringResource(R.string.phrase_en)) },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = phraseEs,
-                    onValueChange = { phraseEs = it },
-                    label = { Text(stringResource(R.string.phrase_es)) },
+                    value = phrase,
+                    onValueChange = { phrase = it },
+                    label = {
+                        Text(stringResource(if (isSpanish) R.string.phrase_es else R.string.phrase_en))
+                    },
                     modifier = Modifier.fillMaxWidth(),
                 )
 
@@ -163,12 +155,14 @@ fun CardEditDialog(
                     if (previousPhoto != null && previousPhoto != photoPath) {
                         PhotoStore.delete(previousPhoto)
                     }
+                    val trimmedLabel = label.trim()
+                    val trimmedPhrase = phrase.trim()
                     onSave(
                         card.copy(
-                            labelEn = labelEn.trim(),
-                            labelEs = labelEs.trim(),
-                            phraseEn = phraseEn.trim(),
-                            phraseEs = phraseEs.trim(),
+                            labelEn = if (isNew || isSpanish) trimmedLabel else card.labelEn,
+                            labelEs = if (isNew || !isSpanish) trimmedLabel else card.labelEs,
+                            phraseEn = if (isNew || isSpanish) trimmedPhrase else card.phraseEn,
+                            phraseEs = if (isNew || !isSpanish) trimmedPhrase else card.phraseEs,
                             color = selectedColor,
                             imageType = if (photoPath != null) ImageType.PHOTO else card.imageType,
                             imageValue = photoPath ?: card.imageValue,

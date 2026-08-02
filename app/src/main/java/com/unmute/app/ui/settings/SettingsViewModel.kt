@@ -7,7 +7,6 @@ import com.unmute.app.data.BoardRepository
 import com.unmute.app.data.SettingsRepository
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.AppLanguage
-import com.unmute.app.domain.model.AudioOutput
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.tts.TtsManager
@@ -66,9 +65,11 @@ class SettingsViewModel(
         }
     }
 
-    fun setAudioOutput(output: AudioOutput) {
-        viewModelScope.launch { settingsRepository.setAudioOutput(output) }
+    fun setAudioOutput(outputId: String) {
+        viewModelScope.launch { settingsRepository.setAudioOutput(outputId) }
     }
+
+    fun availableOutputs(): List<Pair<String, String>> = ttsManager.availableOutputs()
 
     fun setAutospeak(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setAutospeak(enabled) }
@@ -93,7 +94,7 @@ class SettingsViewModel(
             ttsManager.speak(
                 text = TEST_TEXT[lang] ?: TEST_TEXT.getValue("en"),
                 language = lang,
-                output = s.audioOutput,
+                outputId = s.audioOutput,
                 rate = s.speechRate,
                 pitch = s.speechPitch,
             )

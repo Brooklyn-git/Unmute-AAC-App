@@ -214,6 +214,8 @@ fun BoardScreen(
     editingCard?.let { card ->
         CardEditDialog(
             card = card,
+            language = language,
+            isNew = false,
             onSave = {
                 viewModel.saveCard(it)
                 editingCard = null
@@ -236,6 +238,8 @@ fun BoardScreen(
                 color = null,
                 orderIndex = 0,
             ),
+            language = language,
+            isNew = true,
             onSave = {
                 viewModel.saveCard(it)
                 addingCard = false

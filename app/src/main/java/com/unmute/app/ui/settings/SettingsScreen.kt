@@ -44,7 +44,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unmute.app.R
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.AppLanguage
-import com.unmute.app.domain.model.AudioOutput
+import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.domain.model.CardFontSize
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -52,6 +52,7 @@ import com.unmute.app.domain.model.CardFontSize
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
+    onLanguageChanged: (AppLanguage) -> Unit,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val profiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
@@ -81,17 +82,17 @@ fun SettingsScreen(
                 LanguageRow(
                     label = stringResource(R.string.language_system),
                     selected = settings.language == AppLanguage.SYSTEM,
-                    onClick = { viewModel.setLanguage(AppLanguage.SYSTEM) },
+                    onClick = { viewModel.setLanguage(AppLanguage.SYSTEM); onLanguageChanged(AppLanguage.SYSTEM) },
                 )
                 LanguageRow(
                     label = stringResource(R.string.language_english),
                     selected = settings.language == AppLanguage.EN,
-                    onClick = { viewModel.setLanguage(AppLanguage.EN) },
+                    onClick = { viewModel.setLanguage(AppLanguage.EN); onLanguageChanged(AppLanguage.EN) },
                 )
                 LanguageRow(
                     label = stringResource(R.string.language_spanish),
                     selected = settings.language == AppLanguage.ES,
-                    onClick = { viewModel.setLanguage(AppLanguage.ES) },
+                    onClick = { viewModel.setLanguage(AppLanguage.ES); onLanguageChanged(AppLanguage.ES) },
                 )
             }
 
@@ -177,26 +178,19 @@ fun SettingsScreen(
 
             item { SectionHeader(stringResource(R.string.audio_output)) }
             item {
+                val outputs = viewModel.availableOutputs()
                 AudioOutputRow(
                     label = stringResource(R.string.audio_output_auto),
-                    selected = settings.audioOutput == AudioOutput.AUTO,
-                    onClick = { viewModel.setAudioOutput(AudioOutput.AUTO) },
+                    selected = settings.audioOutput == AudioOutputIds.AUTO,
+                    onClick = { viewModel.setAudioOutput(AudioOutputIds.AUTO) },
                 )
-                AudioOutputRow(
-                    label = stringResource(R.string.audio_output_speaker),
-                    selected = settings.audioOutput == AudioOutput.SPEAKER,
-                    onClick = { viewModel.setAudioOutput(AudioOutput.SPEAKER) },
-                )
-                AudioOutputRow(
-                    label = stringResource(R.string.audio_output_wired),
-                    selected = settings.audioOutput == AudioOutput.WIRED,
-                    onClick = { viewModel.setAudioOutput(AudioOutput.WIRED) },
-                )
-                AudioOutputRow(
-                    label = stringResource(R.string.audio_output_bluetooth),
-                    selected = settings.audioOutput == AudioOutput.BLUETOOTH,
-                    onClick = { viewModel.setAudioOutput(AudioOutput.BLUETOOTH) },
-                )
+                outputs.forEach { (id, name) ->
+                    AudioOutputRow(
+                        label = name,
+                        selected = settings.audioOutput == id,
+                        onClick = { viewModel.setAudioOutput(id) },
+                    )
+                }
             }
         }
     }
