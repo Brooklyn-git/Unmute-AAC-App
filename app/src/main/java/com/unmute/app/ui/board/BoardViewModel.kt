@@ -151,6 +151,12 @@ class BoardViewModel(
         }
     }
 
+    fun reorderCategories(reordered: List<CategoryEntity>) {
+        viewModelScope.launch {
+            boardRepository.updateCategoryOrder(reordered)
+        }
+    }
+
     private fun cardPhrase(card: CardEntity): String =
         if (language.value == "es") card.phraseEs else card.phraseEn
 

@@ -1,15 +1,11 @@
 package com.unmute.app.ui.board
 
-import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
-import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.items as lazyItems
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
@@ -38,7 +34,6 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
-import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
@@ -139,11 +134,12 @@ fun BoardScreen(
                 onClear = viewModel::clearSentence,
                 onRemoveLast = viewModel::removeLastWord,
             )
-            CategoryTabs(
+            ReorderableCategoryTabs(
                 categories = categories,
                 selectedCategoryId = effectiveCategoryId,
                 language = language,
                 onSelect = viewModel::selectCategory,
+                onReorder = viewModel::reorderCategories,
             )
             if (cards.isEmpty() && !editMode) {
                 EmptyState()
@@ -209,40 +205,6 @@ fun BoardScreen(
 }
 
 private const val NEW_CARD_EMOJI = "❓"
-
-@Composable
-private fun CategoryTabs(
-    categories: List<CategoryEntity>,
-    selectedCategoryId: Long?,
-    language: String,
-    onSelect: (Long) -> Unit,
-) {
-    LazyRow(
-        contentPadding = PaddingValues(horizontal = 8.dp),
-        horizontalArrangement = Arrangement.spacedBy(8.dp),
-        modifier = Modifier
-            .fillMaxWidth()
-            .padding(vertical = 4.dp),
-    ) {
-        lazyItems(categories, key = { it.id }) { category ->
-            val selected = category.id == selectedCategoryId
-            val color = Color(category.color)
-            Surface(
-                onClick = { onSelect(category.id) },
-                shape = RoundedCornerShape(50),
-                color = if (selected) color else color.copy(alpha = 0.15f),
-                contentColor = if (selected) Color.White else color,
-            ) {
-                Text(
-                    text = category.label(language),
-                    style = MaterialTheme.typography.titleMedium,
-                    fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                    modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-                )
-            }
-        }
-    }
-}
 
 @Composable
 private fun SentenceBar(

@@ -37,6 +37,9 @@ class BoardRepository(
     suspend fun updateCardOrder(cards: List<CardEntity>) =
         cardDao.updateOrder(cards.mapIndexed { index, card -> card.id to index })
 
+    suspend fun updateCategoryOrder(categories: List<CategoryEntity>) =
+        categoryDao.updateOrder(categories.mapIndexed { index, category -> category.id to index })
+
     /** Seeds the default board and grid profiles if the database is empty. */
     suspend fun ensureSeeded() {
         if (boardDao.count() > 0) {

@@ -48,6 +48,14 @@ interface CategoryDao {
 
     @Delete
     suspend fun delete(category: CategoryEntity)
+
+    @Query("UPDATE categories SET orderIndex = :orderIndex WHERE id = :categoryId")
+    suspend fun updateOrderIndex(categoryId: Long, orderIndex: Int)
+
+    @Transaction
+    suspend fun updateOrder(order: List<Pair<Long, Int>>) {
+        order.forEach { (categoryId, orderIndex) -> updateOrderIndex(categoryId, orderIndex) }
+    }
 }
 
 @Dao
