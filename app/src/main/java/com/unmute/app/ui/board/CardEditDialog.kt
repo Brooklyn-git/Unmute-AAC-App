@@ -7,12 +7,13 @@ import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.background
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
-import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.grid.GridCells
@@ -20,11 +21,7 @@ import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
 import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
-import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material3.AlertDialog
-import androidx.compose.material3.Icon
-import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.OutlinedTextField
@@ -45,20 +42,18 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.platform.LocalConfiguration
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
-import androidx.compose.ui.window.Dialog
-import androidx.compose.ui.window.DialogProperties
 import coil.compose.AsyncImage
 import com.unmute.app.R
 import com.unmute.app.data.DefaultSeed
 import com.unmute.app.data.local.CardEntity
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.util.PhotoStore
-import java.io.File
 
 private val COLOR_SWATCHES = listOf(
     0xFF9E9E9E to Color(0xFF9E9E9E),
@@ -99,126 +94,137 @@ fun CardEditDialog(
             }
         },
     )
+    val icons = remember {
+        DefaultSeed.categories
+            .flatMap { it.cards }
+            .map { IconOption(it.imageType, it.imageValue) }
+            .distinctBy { it.value }
+    }
+    val dashBorder = remember { PathEffect.dashPathEffect(floatArrayOf(12f, 12f)) }
 
-    AlertDialog(
-        onDismissRequest = onDismiss,
-        title = { Text(stringResource(R.string.edit_card)) },
-        text = {
-            Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
-                Row(
-                    modifier = Modifier.fillMaxWidth(),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Surface(
-                        shape = RoundedCornerShape(16.dp),
-                        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    if (!showIconPicker) {
+        AlertDialog(
+            onDismissRequest = onDismiss,
+            title = { Text(stringResource(R.string.edit_card)) },
+            text = {
+                Column(verticalArrangement = Arrangement.spacedBy(12.dp)) {
+                    Row(
+                        modifier = Modifier.fillMaxWidth(),
+                        verticalAlignment = Alignment.CenterVertically,
                     ) {
-                        Box(
-                            modifier = Modifier.size(64.dp),
-                            contentAlignment = Alignment.Center,
+                        Surface(
+                            shape = RoundedCornerShape(16.dp),
+                            border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
                         ) {
-                            CardImage(
-                                card = card.copy(
-                                    imageType = imageType,
-                                    imageValue = imageValue,
-                                ),
+                            Box(
+                                modifier = Modifier.size(64.dp),
+                                contentAlignment = Alignment.Center,
+                            ) {
+                                CardImage(
+                                    card = card.copy(
+                                        imageType = imageType,
+                                        imageValue = imageValue,
+                                    ),
+                                )
+                            }
+                        }
+                        OutlinedButton(
+                            onClick = { showIconPicker = true },
+                            modifier = Modifier.padding(start = 12.dp),
+                        ) {
+                            Text(stringResource(R.string.change_photo))
+                        }
+                    }
+
+                    OutlinedTextField(
+                        value = label,
+                        onValueChange = { label = it },
+                        label = {
+                            Text(stringResource(if (isSpanish) R.string.label_es else R.string.label_en))
+                        },
+                        singleLine = true,
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+                    OutlinedTextField(
+                        value = phrase,
+                        onValueChange = { phrase = it },
+                        label = {
+                            Text(stringResource(if (isSpanish) R.string.phrase_es else R.string.phrase_en))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    )
+
+                    Text(
+                        text = stringResource(R.string.color),
+                        style = MaterialTheme.typography.labelLarge,
+                    )
+                    Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                        ColorSwatch(
+                            color = null,
+                            isSelected = selectedColor == null,
+                            onClick = { selectedColor = null },
+                        )
+                        COLOR_SWATCHES.forEach { (value, color) ->
+                            ColorSwatch(
+                                color = color,
+                                isSelected = selectedColor == value,
+                                onClick = { selectedColor = value },
                             )
                         }
                     }
-                    OutlinedButton(
-                        onClick = { showIconPicker = true },
-                        modifier = Modifier.padding(start = 12.dp),
-                    ) {
-                        Text(stringResource(R.string.change_photo))
-                    }
                 }
-
-                if (showIconPicker) {
-                    IconPickerDialog(
-                        selectedType = imageType,
-                        selectedValue = imageValue,
-                        onSelect = { type, value ->
-                            imageType = type
-                            imageValue = value
-                            showIconPicker = false
-                        },
-                        onChoosePhoto = {
-                            showIconPicker = false
-                            picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
-                        },
-                        onDismiss = { showIconPicker = false },
-                    )
-                }
-
-                OutlinedTextField(
-                    value = label,
-                    onValueChange = { label = it },
-                    label = {
-                        Text(stringResource(if (isSpanish) R.string.label_es else R.string.label_en))
-                    },
-                    singleLine = true,
-                    modifier = Modifier.fillMaxWidth(),
-                )
-                OutlinedTextField(
-                    value = phrase,
-                    onValueChange = { phrase = it },
-                    label = {
-                        Text(stringResource(if (isSpanish) R.string.phrase_es else R.string.phrase_en))
-                    },
-                    modifier = Modifier.fillMaxWidth(),
-                )
-
-                Text(
-                    text = stringResource(R.string.color),
-                    style = MaterialTheme.typography.labelLarge,
-                )
-                Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-                    ColorSwatch(
-                        color = null,
-                        isSelected = selectedColor == null,
-                        onClick = { selectedColor = null },
-                    )
-                    COLOR_SWATCHES.forEach { (value, color) ->
-                        ColorSwatch(
-                            color = color,
-                            isSelected = selectedColor == value,
-                            onClick = { selectedColor = value },
+            },
+            confirmButton = {
+                TextButton(
+                    onClick = {
+                        val previousPhoto = card.imageValue.takeIf { card.imageType == ImageType.PHOTO }
+                        if (previousPhoto != null && previousPhoto != imageValue) {
+                            PhotoStore.delete(previousPhoto)
+                        }
+                        val trimmedLabel = label.trim()
+                        val trimmedPhrase = phrase.trim()
+                        onSave(
+                            card.copy(
+                                labelEn = if (isNew || isSpanish) trimmedLabel else card.labelEn,
+                                labelEs = if (isNew || !isSpanish) trimmedLabel else card.labelEs,
+                                phraseEn = if (isNew || isSpanish) trimmedPhrase else card.phraseEn,
+                                phraseEs = if (isNew || !isSpanish) trimmedPhrase else card.phraseEs,
+                                color = selectedColor,
+                                imageType = imageType,
+                                imageValue = imageValue,
+                            ),
                         )
-                    }
+                    },
+                ) {
+                    Text(stringResource(R.string.save))
                 }
-            }
-        },
-        confirmButton = {
-            TextButton(
-                onClick = {
-                    val previousPhoto = card.imageValue.takeIf { card.imageType == ImageType.PHOTO }
-                    if (previousPhoto != null && previousPhoto != imageValue) {
-                        PhotoStore.delete(previousPhoto)
-                    }
-                    val trimmedLabel = label.trim()
-                    val trimmedPhrase = phrase.trim()
-                    onSave(
-                        card.copy(
-                            labelEn = if (isNew || isSpanish) trimmedLabel else card.labelEn,
-                            labelEs = if (isNew || !isSpanish) trimmedLabel else card.labelEs,
-                            phraseEn = if (isNew || isSpanish) trimmedPhrase else card.phraseEn,
-                            phraseEs = if (isNew || !isSpanish) trimmedPhrase else card.phraseEs,
-                            color = selectedColor,
-                            imageType = imageType,
-                            imageValue = imageValue,
-                        ),
-                    )
-                },
-            ) {
-                Text(stringResource(R.string.save))
-            }
-        },
-        dismissButton = {
-            TextButton(onClick = onDismiss) {
-                Text(stringResource(R.string.cancel))
-            }
-        },
-    )
+            },
+            dismissButton = {
+                TextButton(onClick = onDismiss) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+
+    if (showIconPicker) {
+        IconPickerDialog(
+            icons = icons,
+            dashBorder = dashBorder,
+            selectedType = imageType,
+            selectedValue = imageValue,
+            onSelect = { type, value ->
+                imageType = type
+                imageValue = value
+                showIconPicker = false
+            },
+            onChoosePhoto = {
+                showIconPicker = false
+                picker.launch(PickVisualMediaRequest(ActivityResultContracts.PickVisualMedia.ImageOnly))
+            },
+            onDismiss = { showIconPicker = false },
+        )
+    }
 }
 
 @Composable
@@ -245,75 +251,64 @@ private data class IconOption(val type: ImageType, val value: String)
 
 @Composable
 private fun IconPickerDialog(
+    icons: List<IconOption>,
+    dashBorder: PathEffect,
     selectedType: ImageType,
     selectedValue: String,
     onSelect: (ImageType, String) -> Unit,
     onChoosePhoto: () -> Unit,
     onDismiss: () -> Unit,
 ) {
-    val icons = remember {
-        DefaultSeed.categories
-            .flatMap { it.cards }
-            .map { IconOption(it.imageType, it.imageValue) }
-            .distinctBy { it.value }
-    }
-    val dashBorder = remember { PathEffect.dashPathEffect(floatArrayOf(12f, 12f)) }
-
-    Dialog(
+    val configuration = LocalConfiguration.current
+    val maxGridHeight = (configuration.screenHeightDp * 0.55f).dp
+    AlertDialog(
         onDismissRequest = onDismiss,
-        properties = DialogProperties(usePlatformDefaultWidth = false),
-    ) {
-        Surface(modifier = Modifier.fillMaxSize()) {
-            Column(modifier = Modifier.fillMaxSize()) {
-                Row(
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .padding(start = 20.dp, end = 8.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Text(
-                        text = stringResource(R.string.change_photo),
-                        style = MaterialTheme.typography.titleLarge,
-                        modifier = Modifier.weight(1f),
+        modifier = Modifier.fillMaxWidth(),
+        title = { Text(stringResource(R.string.change_photo)) },
+        text = {
+            LazyVerticalGrid(
+                columns = GridCells.Adaptive(72.dp),
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .heightIn(max = maxGridHeight),
+                horizontalArrangement = Arrangement.spacedBy(8.dp),
+                verticalArrangement = Arrangement.spacedBy(8.dp),
+            ) {
+                item(key = "gallery") {
+                    GalleryTile(
+                        onClick = onChoosePhoto,
+                        border = dashBorder,
+                        modifier = Modifier.aspectRatio(1f),
                     )
-                    IconButton(onClick = onDismiss) {
-                        Icon(
-                            imageVector = Icons.Default.Close,
-                            contentDescription = stringResource(R.string.cancel),
-                        )
-                    }
                 }
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(3),
-                    modifier = Modifier
-                        .fillMaxSize()
-                        .padding(horizontal = 16.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                ) {
-                    item(key = "gallery") {
-                        GalleryTile(onClick = onChoosePhoto, border = dashBorder)
-                    }
-                    items(icons, key = { it.value }) { icon ->
-                        val isSelected = icon.type == selectedType && icon.value == selectedValue
-                        IconTile(
-                            icon = icon,
-                            isSelected = isSelected,
-                            onClick = { onSelect(icon.type, icon.value) },
-                        )
-                    }
+                items(icons, key = { it.value }) { icon ->
+                    val isSelected = icon.type == selectedType && icon.value == selectedValue
+                    IconTile(
+                        icon = icon,
+                        isSelected = isSelected,
+                        onClick = { onSelect(icon.type, icon.value) },
+                        modifier = Modifier.aspectRatio(1f),
+                    )
                 }
             }
-        }
-    }
+        },
+        confirmButton = {
+            TextButton(onClick = onDismiss) {
+                Text(stringResource(R.string.cancel))
+            }
+        },
+    )
 }
 
 @Composable
-private fun GalleryTile(onClick: () -> Unit, border: PathEffect) {
+private fun GalleryTile(
+    onClick: () -> Unit,
+    border: PathEffect,
+    modifier: Modifier = Modifier,
+) {
     val outlineColor = MaterialTheme.colorScheme.outline
     Box(
-        modifier = Modifier
-            .aspectRatio(1f)
+        modifier = modifier
             .clip(RoundedCornerShape(12.dp))
             .background(MaterialTheme.colorScheme.surfaceVariant)
             .drawBehind {
@@ -324,19 +319,20 @@ private fun GalleryTile(onClick: () -> Unit, border: PathEffect) {
                 )
             }
             .clickable(onClick = onClick)
-            .padding(8.dp),
+            .padding(6.dp),
         contentAlignment = Alignment.Center,
     ) {
         Column(horizontalAlignment = Alignment.CenterHorizontally) {
             Text(
                 text = "+",
-                fontSize = 40.sp,
+                fontSize = 32.sp,
                 color = MaterialTheme.colorScheme.primary,
             )
             Text(
                 text = stringResource(R.string.choose_from_gallery),
                 style = MaterialTheme.typography.labelMedium,
                 textAlign = TextAlign.Center,
+                maxLines = 2,
                 color = MaterialTheme.colorScheme.primary,
             )
         }
@@ -348,6 +344,7 @@ private fun IconTile(
     icon: IconOption,
     isSelected: Boolean,
     onClick: () -> Unit,
+    modifier: Modifier = Modifier,
 ) {
     Surface(
         onClick = onClick,
@@ -365,11 +362,11 @@ private fun IconTile(
                 MaterialTheme.colorScheme.outlineVariant
             },
         ),
-        modifier = Modifier.aspectRatio(1f),
+        modifier = modifier,
     ) {
         if (icon.type == ImageType.EMOJI) {
             Box(contentAlignment = Alignment.Center) {
-                Text(text = icon.value, fontSize = 28.sp)
+                Text(text = icon.value, fontSize = 40.sp)
             }
         } else {
             AsyncImage(
