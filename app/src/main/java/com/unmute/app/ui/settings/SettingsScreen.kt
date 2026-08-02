@@ -52,7 +52,6 @@ import com.unmute.app.domain.model.CardFontSize
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
-    onLanguageChanged: (AppLanguage) -> Unit,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     val profiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
@@ -82,17 +81,17 @@ fun SettingsScreen(
                 LanguageRow(
                     label = stringResource(R.string.language_system),
                     selected = settings.language == AppLanguage.SYSTEM,
-                    onClick = { viewModel.setLanguage(AppLanguage.SYSTEM); onLanguageChanged(AppLanguage.SYSTEM) },
+                    onClick = { viewModel.setLanguage(AppLanguage.SYSTEM) },
                 )
                 LanguageRow(
                     label = stringResource(R.string.language_english),
                     selected = settings.language == AppLanguage.EN,
-                    onClick = { viewModel.setLanguage(AppLanguage.EN); onLanguageChanged(AppLanguage.EN) },
+                    onClick = { viewModel.setLanguage(AppLanguage.EN) },
                 )
                 LanguageRow(
                     label = stringResource(R.string.language_spanish),
                     selected = settings.language == AppLanguage.ES,
-                    onClick = { viewModel.setLanguage(AppLanguage.ES); onLanguageChanged(AppLanguage.ES) },
+                    onClick = { viewModel.setLanguage(AppLanguage.ES) },
                 )
             }
 

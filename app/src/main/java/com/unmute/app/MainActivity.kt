@@ -7,12 +7,14 @@ import androidx.activity.ComponentActivity
 import androidx.activity.compose.setContent
 import androidx.activity.enableEdgeToEdge
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
+import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.viewmodel.compose.viewModel
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.ui.AppViewModelFactory
@@ -22,9 +24,12 @@ import com.unmute.app.ui.settings.SettingsScreen
 import com.unmute.app.ui.theme.UnmuteTheme
 import java.util.Locale
 import kotlinx.coroutines.flow.first
+import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
+
+    private var appliedLanguage: AppLanguage = AppLanguage.SYSTEM
 
     override fun attachBaseContext(newBase: Context) {
         super.attachBaseContext(withAppLanguage(newBase))
@@ -35,16 +40,44 @@ class MainActivity : ComponentActivity() {
         enableEdgeToEdge()
         setContent {
             UnmuteTheme {
-                AppNavigation(onLanguageChanged = { _ -> recreate() })
+                val container = (application as UnmuteApplication).container
+                val language by container.settingsRepository.settings
+                    .map { it.language }
+                    .collectAsStateWithLifecycle(initialValue = appliedLanguage)
+
+                LaunchedEffect(language) {
+                    if (language != appliedLanguage) {
+                        recreate()
+                    }
+                }
+
+                AppNavigation()
             }
         }
+    }
+
+    private fun withAppLanguage(base: Context): Context {
+        val container = (base.applicationContext as? UnmuteApplication)?.container ?: return base
+        val selected = runCatching {
+            runBlocking { container.settingsRepository.settings.first().language }
+        }.getOrDefault(AppLanguage.SYSTEM)
+        appliedLanguage = selected
+        val locale = when (selected) {
+            AppLanguage.SYSTEM -> return base
+            AppLanguage.EN -> Locale.ENGLISH
+            AppLanguage.ES -> Locale("es")
+        }
+        Locale.setDefault(locale)
+        val config = Configuration(base.resources.configuration)
+        config.setLocale(locale)
+        return base.createConfigurationContext(config)
     }
 }
 
 private enum class AppScreen { Board, Settings }
 
 @Composable
-private fun AppNavigation(onLanguageChanged: (AppLanguage) -> Unit) {
+private fun AppNavigation() {
     val context = LocalContext.current
     val factory = remember {
         AppViewModelFactory.from(context.applicationContext as UnmuteApplication)
@@ -64,23 +97,6 @@ private fun AppNavigation(onLanguageChanged: (AppLanguage) -> Unit) {
         AppScreen.Settings -> SettingsScreen(
             viewModel = viewModel(factory = factory),
             onBack = { screen = AppScreen.Board },
-            onLanguageChanged = onLanguageChanged,
         )
     }
-}
-
-private fun withAppLanguage(base: Context): Context {
-    val container = (base.applicationContext as? UnmuteApplication)?.container ?: return base
-    val selected = runCatching {
-        runBlocking { container.settingsRepository.settings.first().language }
-    }.getOrDefault(AppLanguage.SYSTEM)
-    val locale = when (selected) {
-        AppLanguage.SYSTEM -> return base
-        AppLanguage.EN -> Locale.ENGLISH
-        AppLanguage.ES -> Locale("es")
-    }
-    Locale.setDefault(locale)
-    val config = Configuration(base.resources.configuration)
-    config.setLocale(locale)
-    return base.createConfigurationContext(config)
 }

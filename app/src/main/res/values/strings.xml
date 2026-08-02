@@ -40,10 +40,10 @@
     <string name="edit_card">Edit card</string>
     <string name="add_card">Add card</string>
     <string name="change_photo">Change photo</string>
-    <string name="label_en">Label (English)</string>
-    <string name="label_es">Label (Spanish)</string>
-    <string name="phrase_en">Phrase (English)</string>
-    <string name="phrase_es">Phrase (Spanish)</string>
+    <string name="label_en">Label</string>
+    <string name="label_es">Label</string>
+    <string name="phrase_en">Phrase</string>
+    <string name="phrase_es">Phrase</string>
     <string name="color">Color</string>
 
     <string name="speech">Speech</string>
