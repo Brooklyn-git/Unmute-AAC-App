@@ -33,6 +33,7 @@ data class CategoryEntity(
     val nameEs: String,
     val color: Long,
     val orderIndex: Int,
+    val isPreset: Boolean = false,
 )
 
 @Entity(

@@ -37,6 +37,9 @@
     <string name="done_editing">Terminar edición</string>
     <string name="edit_card">Editar tarjeta</string>
     <string name="add_card">Añadir tarjeta</string>
+    <string name="add_section">Añadir sección</string>
+    <string name="new_section">Nueva sección</string>
+    <string name="section_name">Nombre de la sección</string>
     <string name="change_photo">Cambiar foto</string>
     <string name="search_icons">Buscar iconos</string>
     <string name="no_matching_icons">Ningún icono coincide con tu búsqueda</string>

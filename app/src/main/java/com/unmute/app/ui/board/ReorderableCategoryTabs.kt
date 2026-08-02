@@ -1,15 +1,22 @@
 package com.unmute.app.ui.board
 
+import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.lazy.rememberLazyListState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.Close
+import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
@@ -19,14 +26,18 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
+import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
+import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
+import com.unmute.app.R
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.domain.model.label
 
@@ -40,6 +51,9 @@ fun ReorderableCategoryTabs(
     language: String,
     onSelect: (Long) -> Unit,
     onReorder: (List<CategoryEntity>) -> Unit,
+    onDeleteCategory: (CategoryEntity) -> Unit,
+    editable: Boolean,
+    onAddSection: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -66,8 +80,7 @@ fun ReorderableCategoryTabs(
             Box(
                 modifier = Modifier
                     .zIndex(if (isDragging) 1f else 0f)
-                    .pointerInput(category.id) {
-                        detectDragGesturesAfterLongPress(
+                    .pointerInput(category.id) {                        detectDragGesturesAfterLongPress(
                             onDragStart = {
                                 draggingCategoryId = category.id
                                 dragOffset = 0f
@@ -128,8 +141,58 @@ fun ReorderableCategoryTabs(
                         selected = selected,
                         onClick = { onSelect(category.id) },
                     )
+                    if (editable && !category.isPreset) {
+                        Surface(
+                            onClick = { onDeleteCategory(category) },
+                            shape = CircleShape,
+                            color = MaterialTheme.colorScheme.errorContainer,
+                            modifier = Modifier
+                                .align(Alignment.TopEnd)
+                                .size(28.dp),
+                        ) {
+                            Icon(
+                                Icons.Default.Close,
+                                contentDescription = stringResource(R.string.delete),
+                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                modifier = Modifier.padding(4.dp),
+                            )
+                        }
+                    }
                 }
             }
+        }
+        if (editable) {
+            item(key = "add_section") {
+                AddSectionChip(onClick = onAddSection)
+            }
+        }
+    }
+}
+
+@Composable
+private fun AddSectionChip(onClick: () -> Unit) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(50),
+        color = MaterialTheme.colorScheme.surfaceVariant,
+        border = BorderStroke(1.dp, MaterialTheme.colorScheme.outlineVariant),
+    ) {
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 12.dp),
+        ) {
+            Text(
+                text = "+",
+                fontSize = 20.sp,
+                color = MaterialTheme.colorScheme.primary,
+            )
+            Text(
+                text = stringResource(R.string.add_section),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.Bold,
+                color = MaterialTheme.colorScheme.primary,
+                modifier = Modifier.padding(start = 8.dp),
+            )
         }
     }
 }

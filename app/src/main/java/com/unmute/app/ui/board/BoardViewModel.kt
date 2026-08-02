@@ -157,6 +157,31 @@ class BoardViewModel(
         }
     }
 
+    fun addCategory(name: String, color: Long) {
+        viewModelScope.launch {
+            val boardId = board.value?.id ?: return@launch
+            val id = boardRepository.insertCategory(
+                boardId = boardId,
+                nameEn = name,
+                nameEs = name,
+                color = color,
+                orderIndex = categories.value.size,
+            )
+            _selectedCategoryId.value = id
+        }
+    }
+
+    fun deleteCategory(category: CategoryEntity) {
+        viewModelScope.launch {
+            val deletedCards = boardRepository.deleteCategory(category)
+            deletedCards
+                .filter { it.imageType == ImageType.PHOTO }
+                .forEach { PhotoStore.delete(it.imageValue) }
+            val remaining = categories.value.filterNot { it.id == category.id }
+            _selectedCategoryId.value = remaining.firstOrNull()?.id
+        }
+    }
+
     private fun cardPhrase(card: CardEntity): String =
         if (language.value == "es") card.phraseEs else card.phraseEn
 

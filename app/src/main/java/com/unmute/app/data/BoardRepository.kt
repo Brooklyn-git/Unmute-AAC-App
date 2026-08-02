@@ -40,6 +40,31 @@ class BoardRepository(
     suspend fun updateCategoryOrder(categories: List<CategoryEntity>) =
         categoryDao.updateOrder(categories.mapIndexed { index, category -> category.id to index })
 
+    suspend fun insertCategory(
+        boardId: Long,
+        nameEn: String,
+        nameEs: String,
+        color: Long,
+        orderIndex: Int,
+    ): Long = categoryDao.insert(
+        CategoryEntity(
+            boardId = boardId,
+            nameEn = nameEn,
+            nameEs = nameEs,
+            color = color,
+            orderIndex = orderIndex,
+            isPreset = false,
+        ),
+    )
+
+    /** Deletes [category] and returns its cards so callers can clean up photos. */
+    suspend fun deleteCategory(category: CategoryEntity): List<CardEntity> {
+        if (category.isPreset) return emptyList()
+        val cards = cardDao.getCards(category.id)
+        categoryDao.delete(category)
+        return cards
+    }
+
     /** Seeds the default board and grid profiles if the database is empty. */
     suspend fun ensureSeeded() {
         if (boardDao.count() > 0) {
@@ -61,6 +86,7 @@ class BoardRepository(
                     nameEs = category.nameEs,
                     color = category.color,
                     orderIndex = categoryIndex,
+                    isPreset = true,
                 ),
             )
             category.cards.forEachIndexed { cardIndex, card ->

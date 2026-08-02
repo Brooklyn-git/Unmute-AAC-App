@@ -76,6 +76,7 @@ fun BoardScreen(
     val effectiveCategoryId = selectedCategory?.id ?: categories.firstOrNull()?.id
     var editingCard by remember { mutableStateOf<CardEntity?>(null) }
     var addingCard by remember { mutableStateOf(false) }
+    var addingSection by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -140,6 +141,9 @@ fun BoardScreen(
                 language = language,
                 onSelect = viewModel::selectCategory,
                 onReorder = viewModel::reorderCategories,
+                onDeleteCategory = viewModel::deleteCategory,
+                editable = editMode,
+                onAddSection = { addingSection = true },
             )
             if (cards.isEmpty() && !editMode) {
                 EmptyState()
@@ -200,6 +204,16 @@ fun BoardScreen(
                 addingCard = false
             },
             onDismiss = { addingCard = false },
+        )
+    }
+
+    if (addingSection) {
+        SectionEditDialog(
+            onSave = { name, color ->
+                viewModel.addCategory(name, color)
+                addingSection = false
+            },
+            onDismiss = { addingSection = false },
         )
     }
 }
