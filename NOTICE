@@ -1,0 +1,19 @@
+Unmute
+
+Copyright (C) 2026 The Unmute authors
+
+The Unmute source code is licensed under the GNU General Public License
+version 3 (see LICENSE).
+
+----------------------------------------------------------------------
+Third-party notices
+----------------------------------------------------------------------
+
+The application bundles symbols from the Mulberry Symbols set
+(https://mulberrysymbols.org), (c) Mulberry Symbols, which are licensed
+under the Creative Commons Attribution-ShareAlike 4.0 International
+License (CC BY-SA 4.0). See https://creativecommons.org/licenses/by-sa/4.0/
+for the license terms.
+
+A curated subset of the Mulberry symbols is distributed as part of the
+application (app/src/main/assets/symbols/) in accordance with that license.

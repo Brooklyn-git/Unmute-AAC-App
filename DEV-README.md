@@ -63,3 +63,12 @@ app/src/main/java/com/unmute/app/
 - Code should be idiomatic, readable, and follow KISS / DRY.
 - Guard statements over nesting; small single-purpose functions.
 - Prefer free/open dependencies over proprietary ones.
+
+---
+
+## License
+
+- **Source code:** GNU General Public License v3 (`LICENSE`).
+- **Bundled symbols:** Mulberry Symbols, CC BY-SA 4.0 (see `NOTICE`).
+  The symbols live in `app/src/main/assets/symbols/` and must stay under
+  CC BY-SA with attribution.

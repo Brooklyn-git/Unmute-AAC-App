@@ -74,8 +74,8 @@ Unmute is fully offline. It never asks for an account, never connects to the int
 
 ---
 
-## Symbol credits
+## License & credits
 
-The bundled symbols are from the **Mulberry Symbols** set (https://mulberrysymbols.org),
-© Mulberry Symbols, shared under the **Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA)**
-license.
+- **App code** is licensed under the **GNU General Public License v3** (GPL-3.0).
+- The bundled symbols are from the **Mulberry Symbols** set (https://mulberrysymbols.org),
+  © Mulberry Symbols, shared under the **Creative Commons Attribution-ShareAlike 4.0 (CC BY-SA)** license.
