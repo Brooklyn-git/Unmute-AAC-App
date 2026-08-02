@@ -10,9 +10,11 @@ import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
@@ -52,6 +54,7 @@ import coil.compose.AsyncImage
 import com.unmute.app.R
 import com.unmute.app.data.DefaultSeed
 import com.unmute.app.data.local.CardEntity
+import com.unmute.app.domain.model.EMOJI_LIBRARY
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.util.PhotoStore
 
@@ -94,11 +97,17 @@ fun CardEditDialog(
             }
         },
     )
-    val icons = remember {
-        DefaultSeed.categories
-            .flatMap { it.cards }
-            .map { IconOption(it.imageType, it.imageValue) }
-            .distinctBy { it.value }
+    val pickerData = remember {
+        val seed = DefaultSeed.categories.flatMap { it.cards }
+        val labels = buildMap<String, String> {
+            seed.forEach { put(it.imageValue, "${it.labelEn} ${it.labelEs}") }
+            EMOJI_LIBRARY.forEach { put(it.emoji, "${it.labelEn} ${it.labelEs}") }
+        }
+        val icons = (
+            seed.map { IconOption(it.imageType, it.imageValue) } +
+                EMOJI_LIBRARY.map { IconOption(ImageType.EMOJI, it.emoji) }
+            ).distinctBy { it.value }
+        IconPickerData(icons, labels)
     }
     val dashBorder = remember { PathEffect.dashPathEffect(floatArrayOf(12f, 12f)) }
 
@@ -209,7 +218,8 @@ fun CardEditDialog(
 
     if (showIconPicker) {
         IconPickerDialog(
-            icons = icons,
+            icons = pickerData.icons,
+            searchLabels = pickerData.labels,
             dashBorder = dashBorder,
             selectedType = imageType,
             selectedValue = imageValue,
@@ -249,9 +259,15 @@ private fun ColorSwatch(
 
 private data class IconOption(val type: ImageType, val value: String)
 
+private data class IconPickerData(
+    val icons: List<IconOption>,
+    val labels: Map<String, String>,
+)
+
 @Composable
 private fun IconPickerDialog(
     icons: List<IconOption>,
+    searchLabels: Map<String, String>,
     dashBorder: PathEffect,
     selectedType: ImageType,
     selectedValue: String,
@@ -261,34 +277,66 @@ private fun IconPickerDialog(
 ) {
     val configuration = LocalConfiguration.current
     val maxGridHeight = (configuration.screenHeightDp * 0.55f).dp
+    var query by remember { mutableStateOf("") }
+    val filteredIcons = remember(icons, searchLabels, query) {
+        val q = query.trim().lowercase()
+        if (q.isEmpty()) {
+            icons
+        } else {
+            icons.filter { icon ->
+                searchLabels[icon.value]?.contains(q) == true || icon.value.lowercase().contains(q)
+            }
+        }
+    }
     AlertDialog(
         onDismissRequest = onDismiss,
         modifier = Modifier.fillMaxWidth(),
         title = { Text(stringResource(R.string.change_photo)) },
         text = {
-            LazyVerticalGrid(
-                columns = GridCells.Adaptive(72.dp),
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .heightIn(max = maxGridHeight),
-                horizontalArrangement = Arrangement.spacedBy(8.dp),
-                verticalArrangement = Arrangement.spacedBy(8.dp),
-            ) {
-                item(key = "gallery") {
-                    GalleryTile(
-                        onClick = onChoosePhoto,
-                        border = dashBorder,
-                        modifier = Modifier.aspectRatio(1f),
+            Column {
+                OutlinedTextField(
+                    value = query,
+                    onValueChange = { query = it },
+                    label = { Text(stringResource(R.string.search_icons)) },
+                    singleLine = true,
+                    modifier = Modifier.fillMaxWidth(),
+                )
+                Spacer(Modifier.height(8.dp))
+                if (filteredIcons.isEmpty()) {
+                    Text(
+                        text = stringResource(R.string.no_matching_icons),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .padding(24.dp),
+                        textAlign = TextAlign.Center,
+                        color = MaterialTheme.colorScheme.outline,
                     )
-                }
-                items(icons, key = { it.value }) { icon ->
-                    val isSelected = icon.type == selectedType && icon.value == selectedValue
-                    IconTile(
-                        icon = icon,
-                        isSelected = isSelected,
-                        onClick = { onSelect(icon.type, icon.value) },
-                        modifier = Modifier.aspectRatio(1f),
-                    )
+                } else {
+                    LazyVerticalGrid(
+                        columns = GridCells.Adaptive(72.dp),
+                        modifier = Modifier
+                            .fillMaxWidth()
+                            .heightIn(max = maxGridHeight),
+                        horizontalArrangement = Arrangement.spacedBy(8.dp),
+                        verticalArrangement = Arrangement.spacedBy(8.dp),
+                    ) {
+                        item(key = "gallery") {
+                            GalleryTile(
+                                onClick = onChoosePhoto,
+                                border = dashBorder,
+                                modifier = Modifier.aspectRatio(1f),
+                            )
+                        }
+                        items(filteredIcons, key = { it.value }) { icon ->
+                            val isSelected = icon.type == selectedType && icon.value == selectedValue
+                            IconTile(
+                                icon = icon,
+                                isSelected = isSelected,
+                                onClick = { onSelect(icon.type, icon.value) },
+                                modifier = Modifier.aspectRatio(1f),
+                            )
+                        }
+                    }
                 }
             }
         },

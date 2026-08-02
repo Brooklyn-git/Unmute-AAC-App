@@ -38,6 +38,8 @@
     <string name="edit_card">Editar tarjeta</string>
     <string name="add_card">Añadir tarjeta</string>
     <string name="change_photo">Cambiar foto</string>
+    <string name="search_icons">Buscar iconos</string>
+    <string name="no_matching_icons">Ningún icono coincide con tu búsqueda</string>
     <string name="choose_from_gallery">Elegir de la galería</string>
     <string name="label_en">Etiqueta</string>
     <string name="label_es">Etiqueta</string>
