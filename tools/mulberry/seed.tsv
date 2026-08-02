@@ -1,0 +1,89 @@
+category	labelEn	labelEs	phraseEn	phraseEs	image
+Greetings	Hello	Hola	Hello	Hola	hello
+Greetings	Goodbye	Adiós	Goodbye	Adiós	emoji:👋
+Greetings	Good morning	Buenos días	Good morning	Buenos días	morning
+Greetings	Good night	Buenas noches	Good night	Buenas noches	night
+Greetings	Please	Por favor	Please	Por favor	emoji:🙏
+Greetings	Thank you	Gracias	Thank you	Gracias	emoji:😊
+Greetings	Yes	Sí	Yes	Sí	emoji:👍
+Greetings	No	No	No	No	emoji:👎
+Greetings	Help	Ayuda	Help	Ayúdame	help_,_to
+Greetings	More	Más	More	Más	more
+People	Mum	Mamá	Mum	Mamá	mum_parent
+People	Dad	Papá	Dad	Papá	dad_parent
+People	Brother	Hermano	Brother	Hermano	brother
+People	Sister	Hermana	Sister	Hermana	sister
+People	Grandma	Abuela	Grandma	Abuela	grandmother
+People	Grandpa	Abuelo	Grandpa	Abuelo	grandfather
+People	Family	Familia	Family	Familia	family
+People	Friend	Amigo	Friend	Amigo	emoji:👫
+Feelings	Happy	Feliz	I am happy	Estoy feliz	happy_man
+Feelings	Sad	Triste	I am sad	Estoy triste	sad_man
+Feelings	Angry	Enfadado	I am angry	Estoy enfadado	angry_man
+Feelings	Tired	Cansado	I am tired	Estoy cansado	emoji:🥱
+Feelings	Scared	Asustado	I am scared	Tengo miedo	emoji:😨
+Feelings	Sick	Enfermo	I am sick	Estoy enfermo	emoji:🤒
+Feelings	Hurt	Herido	It hurts	Me duele	emoji:🤕
+Feelings	Good	Bien	Good	Bien	good
+Feelings	Bad	Mal	Bad	Mal	bad
+Feelings	Love	Amor	I love you	Te quiero	emoji:💕
+Food & Drink	Eat	Comer	Eat	Comer	emoji:🍽️
+Food & Drink	Food	Comida	Food	Comida	food
+Food & Drink	Drink	Beber	Drink	Beber	drink
+Food & Drink	Water	Agua	Water	Agua	water
+Food & Drink	Milk	Leche	Milk	Leche	milk
+Food & Drink	Tea	Té	Tea	Té	tea
+Food & Drink	Coffee	Café	Coffee	Café	coffee
+Food & Drink	Apple	Manzana	Apple	Manzana	apple
+Food & Drink	Banana	Plátano	Banana	Plátano	banana
+Food & Drink	Bread	Pan	Bread	Pan	bread
+Food & Drink	Cheese	Queso	Cheese	Queso	cheese
+Food & Drink	Egg	Huevo	Egg	Huevo	egg
+Food & Drink	Chicken	Pollo	Chicken	Pollo	chicken
+Food & Drink	Cake	Pastel	Cake	Pastel	cake
+Food & Drink	Hungry	Hambre	I am hungry	Tengo hambre	hungry
+Food & Drink	Thirsty	Sed	I am thirsty	Tengo sed	thirsty
+Actions	Want	Querer	I want	Quiero	emoji:🙋
+Actions	Go	Ir	Go	Ir	emoji:🏃
+Actions	Stop	Parar	Stop	Para	emoji:🛑
+Actions	Wait	Esperar	Wait	Espera	emoji:⏳
+Actions	Give	Dar	Give	Dame	emoji:🤲
+Actions	Play	Jugar	Play	Juega	emoji:⚽
+Actions	Sleep	Dormir	Sleep	Dormir	emoji:😴
+Actions	Sit	Sentarse	Sit	Siéntate	emoji:🪑
+Actions	Stand	Levantarse	Stand	Levántate	emoji:🧍
+Actions	Walk	Caminar	Walk	Camina	emoji:🚶
+Actions	Come	Venir	Come here	Ven aquí	emoji:👉
+Actions	Again	Otra vez	Again	Otra vez	emoji:🔁
+Actions	Finished	Terminado	Finished	Terminado	emoji:✅
+Actions	Wash hands	Lavarse las manos	Wash hands	Lávate las manos	wash_hands_,_to
+Actions	Brush teeth	Cepillarse los dientes	Brush teeth	Cepíllate los dientes	brush_teeth_,_to
+Actions	Shower	Ducha	Shower	Dúchate	shower
+Actions	Toilet	Baño	I need the toilet	Necesito el baño	toilet
+Places	Home	Casa	Home	Casa	house
+Places	School	Colegio	School	Colegio	school
+Places	Shop	Tienda	Shop	Tienda	shop
+Places	Hospital	Hospital	Hospital	Hospital	surgery_health_centre
+Places	Garden	Jardín	Garden	Jardín	back_garden
+Places	Park	Parque	Park	Parque	emoji:🌳
+Places	Outside	Fuera	Outside	Fuera	outside
+Places	Inside	Dentro	Inside	Dentro	inside_room
+Things	Car	Coche	Car	Coche	car
+Things	Bus	Autobús	Bus	Autobús	bus
+Things	Ball	Pelota	Ball	Pelota	ball
+Things	Toys	Juguetes	Toys	Juguetes	toys
+Things	Music	Música	Music	Música	music
+Things	Book	Libro	Book	Libro	emoji:📖
+Things	Computer	Ordenador	Computer	Ordenador	computer_1
+Things	Phone	Teléfono	Phone	Teléfono	phone_picture_video
+Things	TV	Televisión	TV	Televisión	emoji:📺
+Things	Radio	Radio	Radio	Radio	emoji:📻
+Things	Money	Dinero	Money	Dinero	money
+Things	Keys	Llaves	Keys	Llaves	key_1
+Things	Bag	Bolso	Bag	Bolso	hand_bag
+Things	Coat	Abrigo	Coat	Abrigo	coat
+Things	Shoes	Zapatos	Shoes	Zapatos	emoji:👟
+Things	Hat	Gorro	Hat	Gorro	cap
+Body	Head	Cabeza	Head	Cabeza	head
+Body	Arm	Brazo	Arm	Brazo	arm
+Body	Teeth	Dientes	Teeth	Dientes	teeth
