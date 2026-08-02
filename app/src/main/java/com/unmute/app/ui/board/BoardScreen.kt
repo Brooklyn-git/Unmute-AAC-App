@@ -149,6 +149,12 @@ fun BoardScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
+            SentenceBar(
+                words = sentence,
+                onSpeak = viewModel::speakSentence,
+                onClear = viewModel::clearSentence,
+                onRemoveLast = viewModel::removeLastWord,
+            )
             CategoryTabs(
                 categories = categories,
                 selectedCategoryId = effectiveCategoryId,
@@ -212,12 +218,6 @@ fun BoardScreen(
                     }
                 }
             }
-            SentenceBar(
-                words = sentence,
-                onSpeak = viewModel::speakSentence,
-                onClear = viewModel::clearSentence,
-                onRemoveLast = viewModel::removeLastWord,
-            )
         }
     }
 
