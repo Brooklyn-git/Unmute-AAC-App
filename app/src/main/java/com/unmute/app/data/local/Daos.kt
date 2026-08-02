@@ -4,6 +4,7 @@ import androidx.room.Dao
 import androidx.room.Delete
 import androidx.room.Insert
 import androidx.room.Query
+import androidx.room.Transaction
 import androidx.room.Update
 import kotlinx.coroutines.flow.Flow
 
@@ -71,6 +72,14 @@ interface CardDao {
 
     @Delete
     suspend fun delete(card: CardEntity)
+
+    @Query("UPDATE cards SET orderIndex = :orderIndex WHERE id = :cardId")
+    suspend fun updateOrderIndex(cardId: Long, orderIndex: Int)
+
+    @Transaction
+    suspend fun updateOrder(order: List<Pair<Long, Int>>) {
+        order.forEach { (cardId, orderIndex) -> updateOrderIndex(cardId, orderIndex) }
+    }
 }
 
 @Dao

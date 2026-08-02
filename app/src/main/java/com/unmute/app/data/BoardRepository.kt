@@ -34,6 +34,9 @@ class BoardRepository(
 
     suspend fun deleteCard(card: CardEntity) = cardDao.delete(card)
 
+    suspend fun updateCardOrder(cards: List<CardEntity>) =
+        cardDao.updateOrder(cards.mapIndexed { index, card -> card.id to index })
+
     /** Seeds the default board and grid profiles if the database is empty. */
     suspend fun ensureSeeded() {
         if (boardDao.count() > 0) {

@@ -8,21 +8,13 @@ import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.lazy.LazyRow
-import androidx.compose.foundation.lazy.grid.GridCells
-import androidx.compose.foundation.lazy.grid.LazyVerticalGrid
-import androidx.compose.foundation.lazy.grid.items
 import androidx.compose.foundation.lazy.items as lazyItems
-import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Backspace
-import androidx.compose.material.icons.filled.Check
 import androidx.compose.material.icons.filled.Clear
-import androidx.compose.material.icons.filled.Close
 import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Settings
@@ -156,59 +148,24 @@ fun BoardScreen(
             if (cards.isEmpty() && !editMode) {
                 EmptyState()
             } else {
-                LazyVerticalGrid(
-                    columns = GridCells.Fixed(columns),
-                    contentPadding = PaddingValues(8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
-                    horizontalArrangement = Arrangement.spacedBy(8.dp),
-                    modifier = Modifier
-                        .fillMaxWidth()
-                        .weight(1f),
-                ) {
-                    items(cards, key = { it.id }) { card ->
-                        val accentColor = Color(card.color ?: selectedCategory?.color ?: 0xFF9E9E9E)
-                        Box {
-                            CardButton(
-                                card = card,
-                                label = card.label(language),
-                                accentColor = accentColor,
-                                labelFontSize = when (cardFontSize.cardFontSize) {
-                                    CardFontSize.SMALL -> 14.sp
-                                    CardFontSize.LARGE -> 20.sp
-                                    else -> 16.sp
-                                },
-                                onClick = {
-                                    if (editMode) editingCard = card else onCardClick(card)
-                                },
-                            )
-                            if (editMode) {
-                                Surface(
-                                    onClick = { viewModel.deleteCard(card) },
-                                    shape = CircleShape,
-                                    color = MaterialTheme.colorScheme.errorContainer,
-                                    modifier = Modifier
-                                        .align(Alignment.TopEnd)
-                                        .size(28.dp),
-                                ) {
-                                    Icon(
-                                        Icons.Default.Close,
-                                        contentDescription = stringResource(R.string.delete),
-                                        tint = MaterialTheme.colorScheme.onErrorContainer,
-                                        modifier = Modifier.padding(4.dp),
-                                    )
-                                }
-                            }
-                        }
-                    }
-                    if (editMode && effectiveCategoryId != null) {
-                        item(key = ADD_CARD_KEY) {
-                            AddCardButton(
-                                accentColor = Color(selectedCategory?.color ?: 0xFF9E9E9E),
-                                onClick = { addingCard = true },
-                            )
-                        }
-                    }
-                }
+                ReorderableCardsGrid(
+                    cards = cards,
+                    selectedCategory = selectedCategory,
+                    columns = columns,
+                    editMode = editMode,
+                    language = language,
+                    cardFontSize = cardFontSize.cardFontSize,
+                    onCardClick = onCardClick,
+                    onEditCard = { editingCard = it },
+                    onDeleteCard = viewModel::deleteCard,
+                    onAddCard = if (editMode && effectiveCategoryId != null) {
+                        { addingCard = true }
+                    } else {
+                        null
+                    },
+                    onReorder = viewModel::reorderCards,
+                    modifier = Modifier.weight(1f),
+                )
             }
         }
     }
@@ -251,7 +208,6 @@ fun BoardScreen(
     }
 }
 
-private const val ADD_CARD_KEY = "add_card"
 private const val NEW_CARD_EMOJI = "❓"
 
 @Composable
