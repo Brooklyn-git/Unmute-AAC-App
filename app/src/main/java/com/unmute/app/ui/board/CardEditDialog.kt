@@ -54,6 +54,7 @@ import com.unmute.app.data.DefaultSeed
 import com.unmute.app.data.local.CardEntity
 import com.unmute.app.domain.model.EMOJI_LIBRARY
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.withEditedLabels
 import com.unmute.app.util.PhotoStore
 
 @Composable
@@ -180,15 +181,12 @@ fun CardEditDialog(
                         val trimmedLabel = label.trim()
                         val trimmedPhrase = phrase.trim()
                         onSave(
-                            card.copy(
-                                labelEn = if (isNew || isSpanish) trimmedLabel else card.labelEn,
-                                labelEs = if (isNew || !isSpanish) trimmedLabel else card.labelEs,
-                                phraseEn = if (isNew || isSpanish) trimmedPhrase else card.phraseEn,
-                                phraseEs = if (isNew || !isSpanish) trimmedPhrase else card.phraseEs,
-                                color = selectedColor,
-                                imageType = imageType,
-                                imageValue = imageValue,
-                            ),
+                            card.withEditedLabels(isNew, language, trimmedLabel, trimmedPhrase)
+                                .copy(
+                                    color = selectedColor,
+                                    imageType = imageType,
+                                    imageValue = imageValue,
+                                ),
                         )
                     },
                 ) {

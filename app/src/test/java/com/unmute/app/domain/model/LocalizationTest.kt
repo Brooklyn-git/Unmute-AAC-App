@@ -54,4 +54,52 @@ class LocalizationTest {
         assertEquals("I am hungry", card.phrase("en"))
         assertEquals("Tengo hambre", card.phrase("es"))
     }
+
+    @Test
+    fun `withEditedLabels updates only the active language on existing cards`() {
+        val card = CardEntity(
+            categoryId = 1,
+            labelEn = "Hungry",
+            labelEs = "Hambre",
+            phraseEn = "I am hungry",
+            phraseEs = "Tengo hambre",
+            imageType = ImageType.EMOJI,
+            imageValue = "😋",
+            color = null,
+            orderIndex = 0,
+        )
+
+        val editedEn = card.withEditedLabels(isNew = false, lang = "en", label = "Thirsty", phrase = "I am thirsty")
+        assertEquals("Thirsty", editedEn.labelEn)
+        assertEquals("I am thirsty", editedEn.phraseEn)
+        assertEquals("Hambre", editedEn.labelEs)
+        assertEquals("Tengo hambre", editedEn.phraseEs)
+
+        val editedEs = card.withEditedLabels(isNew = false, lang = "es", label = "Sed", phrase = "Tengo sed")
+        assertEquals("Sed", editedEs.labelEs)
+        assertEquals("Tengo sed", editedEs.phraseEs)
+        assertEquals("Hungry", editedEs.labelEn)
+        assertEquals("I am hungry", editedEs.phraseEn)
+    }
+
+    @Test
+    fun `withEditedLabels sets both languages for new cards`() {
+        val card = CardEntity(
+            categoryId = 1,
+            labelEn = "",
+            labelEs = "",
+            phraseEn = "",
+            phraseEs = "",
+            imageType = ImageType.EMOJI,
+            imageValue = "😋",
+            color = null,
+            orderIndex = 0,
+        )
+
+        val newCard = card.withEditedLabels(isNew = true, lang = "en", label = "Hello", phrase = "Hello world")
+        assertEquals("Hello", newCard.labelEn)
+        assertEquals("Hello", newCard.labelEs)
+        assertEquals("Hello world", newCard.phraseEn)
+        assertEquals("Hello world", newCard.phraseEs)
+    }
 }
