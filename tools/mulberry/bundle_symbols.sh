@@ -4,6 +4,7 @@
 # Usage: tools/mulberry/bundle_symbols.sh
 #
 # Requires: the Mulberry release zip at tools/mulberry/mulberry-symbols.zip
+# (not in git; download it from the URL below — see the error hint).
 
 set -euo pipefail
 

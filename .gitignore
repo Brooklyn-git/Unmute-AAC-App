@@ -7,3 +7,5 @@ local.properties
 /captures
 .externalNativeBuild
 .cxx
+# Mulberry release zip — downloaded by tools/mulberry/bundle_symbols.sh
+tools/mulberry/mulberry-symbols.zip
