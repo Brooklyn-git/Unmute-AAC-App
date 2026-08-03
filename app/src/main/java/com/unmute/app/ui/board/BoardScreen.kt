@@ -100,13 +100,19 @@ fun BoardScreen(
             showSecureHint = false
         }
     }
+    LaunchedEffect(lockPressCount, settings.secureResetSeconds) {
+        if (settings.secureMode && !secureUnlocked && lockPressCount > 0) {
+            delay(settings.secureResetSeconds * 1_000L)
+            lockPressCount = 0
+        }
+    }
     val unlocked = !settings.secureMode || secureUnlocked
     val effectiveEditMode = editMode && unlocked
     val onLockClick = {
         if (settings.secureMode && !secureUnlocked) {
             showSecureHint = true
             lockPressCount += 1
-            if (lockPressCount >= SECURE_UNLOCK_PRESSES) {
+            if (lockPressCount >= settings.secureTapCount) {
                 secureUnlocked = true
                 viewModel.setEditMode(true)
                 showSecureHint = false
@@ -116,7 +122,7 @@ fun BoardScreen(
         }
     }
     val secureTapHint = if (settings.secureMode && !secureUnlocked && showSecureHint) {
-        val remaining = SECURE_UNLOCK_PRESSES - lockPressCount
+        val remaining = settings.secureTapCount - lockPressCount
         if (remaining == 1) {
             stringResource(R.string.secure_tap_hint_one)
         } else {
@@ -303,7 +309,6 @@ fun BoardScreen(
     }
 }
 
-private const val SECURE_UNLOCK_PRESSES = 3
 private const val SECURE_HINT_DISPLAY_MILLIS = 1_000L
 private const val NEW_CARD_EMOJI = "❓"
 

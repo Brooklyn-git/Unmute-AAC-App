@@ -54,6 +54,14 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setSecureMode(enabled) }
     }
 
+    fun setSecureTapCount(count: Int) {
+        viewModelScope.launch { settingsRepository.setSecureTapCount(count) }
+    }
+
+    fun setSecureResetSeconds(seconds: Int) {
+        viewModelScope.launch { settingsRepository.setSecureResetSeconds(seconds) }
+    }
+
     fun setSpeechRate(rate: Float) {
         viewModelScope.launch { settingsRepository.setSpeechRate(rate) }
     }

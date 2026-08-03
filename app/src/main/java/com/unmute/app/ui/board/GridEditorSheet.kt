@@ -21,7 +21,6 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
 import androidx.compose.material.icons.filled.Edit
-import androidx.compose.material.icons.filled.Remove
 import androidx.compose.material3.Button
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.HorizontalDivider
@@ -48,12 +47,12 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
-import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import com.unmute.app.R
 import com.unmute.app.data.BoardRepository
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.CardFontSize
+import com.unmute.app.ui.components.Stepper
 import com.unmute.app.ui.settings.GridProfileDialog
 import kotlin.math.roundToInt
 
@@ -320,36 +319,6 @@ private fun LazyListScrollbar(
             size = Size(widthPx, thumbHeight),
             cornerRadius = CornerRadius(widthPx / 2f),
         )
-    }
-}
-
-@Composable
-private fun Stepper(
-    value: Int,
-    range: IntRange,
-    decreaseLabel: String,
-    increaseLabel: String,
-    onChanged: (Int) -> Unit,
-) {
-    Row(verticalAlignment = Alignment.CenterVertically) {
-        IconButton(
-            onClick = { onChanged(value - 1) },
-            enabled = value > range.first,
-        ) {
-            Icon(Icons.Default.Remove, contentDescription = decreaseLabel)
-        }
-        Text(
-            text = value.toString(),
-            style = MaterialTheme.typography.titleLarge,
-            textAlign = TextAlign.Center,
-            modifier = Modifier.width(40.dp),
-        )
-        IconButton(
-            onClick = { onChanged(value + 1) },
-            enabled = value < range.last,
-        ) {
-            Icon(Icons.Default.Add, contentDescription = increaseLabel)
-        }
     }
 }
 

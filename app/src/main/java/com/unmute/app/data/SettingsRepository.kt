@@ -4,6 +4,7 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.floatPreferencesKey
+import androidx.datastore.preferences.core.intPreferencesKey
 import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.core.stringPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
@@ -26,6 +27,8 @@ data class AppSettings(
     val speechPitch: Float = 1f,
     val cardFontSize: CardFontSize = CardFontSize.NORMAL,
     val secureMode: Boolean = false,
+    val secureTapCount: Int = SettingsRepository.DEFAULT_SECURE_TAPS,
+    val secureResetSeconds: Int = SettingsRepository.DEFAULT_SECURE_RESET_SECONDS,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -45,6 +48,10 @@ class SettingsRepository(private val context: Context) {
                 ?.let { runCatching { CardFontSize.valueOf(it) }.getOrNull() }
                 ?: CardFontSize.NORMAL,
             secureMode = prefs[KEY_SECURE_MODE] ?: false,
+            secureTapCount = (prefs[KEY_SECURE_TAP_COUNT] ?: DEFAULT_SECURE_TAPS)
+                .coerceIn(MIN_SECURE_TAPS, MAX_SECURE_TAPS),
+            secureResetSeconds = (prefs[KEY_SECURE_RESET_SECONDS] ?: DEFAULT_SECURE_RESET_SECONDS)
+                .coerceIn(MIN_SECURE_RESET_SECONDS, MAX_SECURE_RESET_SECONDS),
         )
     }
 
@@ -94,7 +101,17 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SECURE_MODE] = enabled }
     }
 
-    private companion object {
+    suspend fun setSecureTapCount(count: Int) {
+        val value = count.coerceIn(MIN_SECURE_TAPS, MAX_SECURE_TAPS)
+        context.dataStore.edit { it[KEY_SECURE_TAP_COUNT] = value }
+    }
+
+    suspend fun setSecureResetSeconds(seconds: Int) {
+        val value = seconds.coerceIn(MIN_SECURE_RESET_SECONDS, MAX_SECURE_RESET_SECONDS)
+        context.dataStore.edit { it[KEY_SECURE_RESET_SECONDS] = value }
+    }
+
+    companion object {
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_GRID_PROFILE = longPreferencesKey("active_grid_profile")
         val KEY_AUDIO_OUTPUT = stringPreferencesKey("audio_output")
@@ -105,5 +122,14 @@ class SettingsRepository(private val context: Context) {
         val KEY_SPEECH_PITCH = floatPreferencesKey("speech_pitch")
         val KEY_CARD_FONT_SIZE = stringPreferencesKey("card_font_size")
         val KEY_SECURE_MODE = booleanPreferencesKey("secure_mode")
+        val KEY_SECURE_TAP_COUNT = intPreferencesKey("secure_tap_count")
+        val KEY_SECURE_RESET_SECONDS = intPreferencesKey("secure_reset_seconds")
+
+        const val DEFAULT_SECURE_TAPS = 3
+        const val MIN_SECURE_TAPS = 1
+        const val MAX_SECURE_TAPS = 10
+        const val DEFAULT_SECURE_RESET_SECONDS = 2
+        const val MIN_SECURE_RESET_SECONDS = 1
+        const val MAX_SECURE_RESET_SECONDS = 10
     }
 }

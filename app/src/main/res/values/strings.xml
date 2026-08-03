@@ -11,9 +11,16 @@
     <string name="language_spanish">Spanish</string>
 
     <string name="secure_mode">Secure mode</string>
+    <string name="secure_mode_toggle">Secure Mode</string>
     <string name="secure_mode_dialog_message">When you turn on &quot;Secure Mode&quot; you hide and lock settings. To unlock them you must press the lock three times.</string>
     <string name="secure_tap_hint_one">tap 1 time to enter edit mode</string>
     <string name="secure_tap_hint_many">tap %1$d times to enter edit mode</string>
+    <string name="secure_taps_label">Number of taps needed</string>
+    <string name="secure_taps_decrease">Decrease number of taps</string>
+    <string name="secure_taps_increase">Increase number of taps</string>
+    <string name="secure_reset_seconds_label">Seconds to reset tap number</string>
+    <string name="secure_reset_seconds_decrease">Decrease reset seconds</string>
+    <string name="secure_reset_seconds_increase">Increase reset seconds</string>
     <string name="accept">Accept</string>
 
     <string name="grid_layout">Grid layout</string>

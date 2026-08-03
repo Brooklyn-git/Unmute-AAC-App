@@ -52,9 +52,11 @@ import androidx.lifecycle.LifecycleEventObserver
 import androidx.lifecycle.compose.LocalLifecycleOwner
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unmute.app.R
+import com.unmute.app.data.SettingsRepository
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.tts.TtsIssue
+import com.unmute.app.ui.components.Stepper
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -130,17 +132,38 @@ fun SettingsScreen(
                 )
             }
 
+            item { SectionHeader(stringResource(R.string.secure_mode)) }
             item {
-                SecureModeRow(
-                    checked = settings.secureMode,
-                    onCheckedChange = { enabled ->
-                        if (enabled && !settings.secureMode) {
-                            showSecureConfirm = true
-                        } else {
-                            viewModel.setSecureMode(enabled)
-                        }
-                    },
-                )
+                Column {
+                    SecureModeRow(
+                        checked = settings.secureMode,
+                        onCheckedChange = { enabled ->
+                            if (enabled && !settings.secureMode) {
+                                showSecureConfirm = true
+                            } else {
+                                viewModel.setSecureMode(enabled)
+                            }
+                        },
+                    )
+                    if (settings.secureMode) {
+                        SecureOptionRow(
+                            label = stringResource(R.string.secure_taps_label),
+                            value = settings.secureTapCount,
+                            range = SettingsRepository.MIN_SECURE_TAPS..SettingsRepository.MAX_SECURE_TAPS,
+                            decreaseLabel = stringResource(R.string.secure_taps_decrease),
+                            increaseLabel = stringResource(R.string.secure_taps_increase),
+                            onChanged = viewModel::setSecureTapCount,
+                        )
+                        SecureOptionRow(
+                            label = stringResource(R.string.secure_reset_seconds_label),
+                            value = settings.secureResetSeconds,
+                            range = SettingsRepository.MIN_SECURE_RESET_SECONDS..SettingsRepository.MAX_SECURE_RESET_SECONDS,
+                            decreaseLabel = stringResource(R.string.secure_reset_seconds_decrease),
+                            increaseLabel = stringResource(R.string.secure_reset_seconds_increase),
+                            onChanged = viewModel::setSecureResetSeconds,
+                        )
+                    }
+                }
             }
 
             item { SectionHeader(stringResource(R.string.speech)) }
@@ -313,8 +336,35 @@ private fun SecureModeRow(
         verticalAlignment = Alignment.CenterVertically,
         horizontalArrangement = Arrangement.SpaceBetween,
     ) {
-        Text(text = stringResource(R.string.secure_mode), style = MaterialTheme.typography.bodyLarge)
+        Text(text = stringResource(R.string.secure_mode_toggle), style = MaterialTheme.typography.bodyLarge)
         Checkbox(checked = checked, onCheckedChange = onCheckedChange)
+    }
+}
+
+@Composable
+private fun SecureOptionRow(
+    label: String,
+    value: Int,
+    range: IntRange,
+    decreaseLabel: String,
+    increaseLabel: String,
+    onChanged: (Int) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+        Stepper(
+            value = value,
+            range = range,
+            decreaseLabel = decreaseLabel,
+            increaseLabel = increaseLabel,
+            onChanged = onChanged,
+        )
     }
 }
 
