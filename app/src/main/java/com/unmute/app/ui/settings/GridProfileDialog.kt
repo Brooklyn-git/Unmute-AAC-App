@@ -87,10 +87,10 @@ private fun ColumnStepper(
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
         IconButton(
-            onClick = { onChanged(value + 1) },
-            enabled = value < range.last,
+            onClick = { onChanged(value - 1) },
+            enabled = value > range.first,
         ) {
-            Icon(Icons.Default.Add, contentDescription = "Increase columns")
+            Icon(Icons.Default.Remove, contentDescription = "Decrease columns")
         }
         Text(
             text = value.toString(),
@@ -99,10 +99,10 @@ private fun ColumnStepper(
             modifier = Modifier.width(40.dp),
         )
         IconButton(
-            onClick = { onChanged(value - 1) },
-            enabled = value > range.first,
+            onClick = { onChanged(value + 1) },
+            enabled = value < range.last,
         ) {
-            Icon(Icons.Default.Remove, contentDescription = "Decrease columns")
+            Icon(Icons.Default.Add, contentDescription = "Increase columns")
         }
     }
 }
