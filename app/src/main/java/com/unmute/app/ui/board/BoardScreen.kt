@@ -40,6 +40,7 @@ import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -50,6 +51,7 @@ import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.label
 import com.unmute.app.tts.TtsIssue
+import kotlinx.coroutines.delay
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -84,24 +86,44 @@ fun BoardScreen(
 
     var secureUnlocked by rememberSaveable { mutableStateOf(false) }
     var lockPressCount by rememberSaveable { mutableStateOf(0) }
+    var showSecureHint by remember { mutableStateOf(false) }
     LaunchedEffect(settings.secureMode) {
         if (settings.secureMode) {
             secureUnlocked = false
             lockPressCount = 0
+            showSecureHint = false
+        }
+    }
+    LaunchedEffect(lockPressCount) {
+        if (settings.secureMode && !secureUnlocked && showSecureHint) {
+            delay(SECURE_HINT_DISPLAY_MILLIS)
+            showSecureHint = false
         }
     }
     val unlocked = !settings.secureMode || secureUnlocked
     val effectiveEditMode = editMode && unlocked
     val onLockClick = {
         if (settings.secureMode && !secureUnlocked) {
+            showSecureHint = true
             lockPressCount += 1
-            if (lockPressCount >= 3) {
+            if (lockPressCount >= SECURE_UNLOCK_PRESSES) {
                 secureUnlocked = true
                 viewModel.setEditMode(true)
+                showSecureHint = false
             }
         } else {
             viewModel.toggleEditMode()
         }
+    }
+    val secureTapHint = if (settings.secureMode && !secureUnlocked && showSecureHint) {
+        val remaining = SECURE_UNLOCK_PRESSES - lockPressCount
+        if (remaining == 1) {
+            stringResource(R.string.secure_tap_hint_one)
+        } else {
+            stringResource(R.string.secure_tap_hint_many, remaining)
+        }
+    } else {
+        null
     }
 
     val context = LocalContext.current
@@ -203,6 +225,17 @@ fun BoardScreen(
                     modifier = Modifier.weight(1f),
                 )
             }
+            secureTapHint?.let { hint ->
+                Text(
+                    text = hint,
+                    style = MaterialTheme.typography.bodyMedium,
+                    color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    textAlign = TextAlign.Center,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(vertical = 8.dp),
+                )
+            }
         }
     }
 
@@ -270,6 +303,8 @@ fun BoardScreen(
     }
 }
 
+private const val SECURE_UNLOCK_PRESSES = 3
+private const val SECURE_HINT_DISPLAY_MILLIS = 1_000L
 private const val NEW_CARD_EMOJI = "❓"
 
 @Composable

@@ -12,6 +12,8 @@
 
     <string name="secure_mode">Secure mode</string>
     <string name="secure_mode_dialog_message">When you turn on &quot;Secure Mode&quot; you hide and lock settings. To unlock them you must press the lock three times.</string>
+    <string name="secure_tap_hint_one">tap 1 time to enter edit mode</string>
+    <string name="secure_tap_hint_many">tap %1$d times to enter edit mode</string>
     <string name="accept">Accept</string>
 
     <string name="grid_layout">Grid layout</string>

@@ -12,6 +12,8 @@
 
     <string name="secure_mode">Modo seguro</string>
     <string name="secure_mode_dialog_message">Cuando actives el &quot;Modo seguro&quot; ocultarás y bloquearás los ajustes. Para desbloquearlos debes pulsar el candado tres veces.</string>
+    <string name="secure_tap_hint_one">toca 1 vez para entrar al modo de edición</string>
+    <string name="secure_tap_hint_many">toca %1$d veces para entrar al modo de edición</string>
     <string name="accept">Aceptar</string>
 
     <string name="grid_layout">Distribución de la cuadrícula</string>
