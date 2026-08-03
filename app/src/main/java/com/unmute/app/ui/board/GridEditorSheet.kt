@@ -1,17 +1,22 @@
 package com.unmute.app.ui.board
 
+import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.Spacer
+import androidx.compose.foundation.layout.fillMaxHeight
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
+import androidx.compose.foundation.layout.heightIn
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.LazyListState
 import androidx.compose.foundation.lazy.items
+import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -29,12 +34,18 @@ import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.runtime.snapshotFlow
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.CornerRadius
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Size
+import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -45,6 +56,9 @@ import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.ui.settings.GridProfileDialog
 import kotlin.math.roundToInt
+
+private const val MAX_PROFILE_ROWS = 3
+private val PROFILE_ROW_HEIGHT = 56.dp
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -95,20 +109,43 @@ fun GridEditorSheet(
             Spacer(Modifier.height(8.dp))
 
             SheetSectionHeader(stringResource(R.string.grid_layout))
-            LazyColumn(
+            val listState = rememberLazyListState()
+            var rowHeightPx by remember { mutableStateOf(0f) }
+            val density = LocalDensity.current
+            LaunchedEffect(listState) {
+                snapshotFlow { listState.layoutInfo.visibleItemsInfo.firstOrNull()?.size }
+                    .collect { measured: Int? ->
+                        if (measured != null && measured > 0) rowHeightPx = measured.toFloat()
+                    }
+            }
+            val rowHeightDp = if (rowHeightPx > 0f) with(density) { rowHeightPx.toDp() } else PROFILE_ROW_HEIGHT
+            val visibleRows = minOf(profiles.size, MAX_PROFILE_ROWS).coerceIn(2, MAX_PROFILE_ROWS)
+            Row(
                 modifier = Modifier
                     .fillMaxWidth()
-                    .weight(1f, fill = false),
+                    .height(rowHeightDp * visibleRows),
             ) {
-                items(profiles, key = { it.id }) { profile ->
-                    GridProfileRow(
-                        profile = profile,
-                        isActive = profile.id == activeProfileId,
-                        onSelect = { onSelectProfile(profile.id) },
-                        onEdit = { dialog = GridEditorDialogState.Edit(profile) },
-                        onDelete = { onDeleteProfile(profile.id) },
-                    )
+                LazyColumn(
+                    state = listState,
+                    modifier = Modifier.weight(1f),
+                ) {
+                    items(profiles, key = { it.id }) { profile ->
+                        GridProfileRow(
+                            profile = profile,
+                            isActive = profile.id == activeProfileId,
+                            onSelect = { onSelectProfile(profile.id) },
+                            onEdit = { dialog = GridEditorDialogState.Edit(profile) },
+                            onDelete = { onDeleteProfile(profile.id) },
+                        )
+                    }
                 }
+                LazyListScrollbar(
+                    listState = listState,
+                    rowHeightPx = rowHeightPx,
+                    modifier = Modifier
+                        .align(Alignment.CenterVertically)
+                        .fillMaxHeight(),
+                )
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
 
@@ -248,6 +285,41 @@ private fun GridProfileRow(
                 Icon(Icons.Default.Delete, contentDescription = stringResource(R.string.delete))
             }
         }
+    }
+}
+
+@Composable
+private fun LazyListScrollbar(
+    listState: LazyListState,
+    rowHeightPx: Float,
+    modifier: Modifier = Modifier,
+) {
+    val scrollbarWidth = 4.dp
+    val minThumbHeight = 24.dp
+    val density = LocalDensity.current
+    val widthPx = with(density) { scrollbarWidth.toPx() }
+    val minThumbPx = with(density) { minThumbHeight.toPx() }
+    val thumbColor = MaterialTheme.colorScheme.outline.copy(alpha = 0.5f)
+
+    Canvas(modifier = modifier.width(scrollbarWidth)) {
+        val totalRows = listState.layoutInfo.totalItemsCount
+        val viewportPx = size.height
+        val totalContentPx = totalRows * rowHeightPx
+        val maxScrollPx = totalContentPx - viewportPx
+        if (maxScrollPx <= 0f) return@Canvas
+
+        val currentScrollPx = listState.firstVisibleItemIndex * rowHeightPx +
+            listState.firstVisibleItemScrollOffset
+        val fraction = (currentScrollPx / maxScrollPx).coerceIn(0f, 1f)
+        val thumbHeight = (viewportPx * viewportPx / totalContentPx).coerceAtLeast(minThumbPx)
+        val thumbOffset = (viewportPx - thumbHeight) * fraction
+
+        drawRoundRect(
+            color = thumbColor,
+            topLeft = Offset(0f, thumbOffset),
+            size = Size(widthPx, thumbHeight),
+            cornerRadius = CornerRadius(widthPx / 2f),
+        )
     }
 }
 
