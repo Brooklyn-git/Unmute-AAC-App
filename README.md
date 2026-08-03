@@ -1,40 +1,25 @@
 # Unmute
 
-**A fully offline, multilingual communication app for Android.**
+**Unmute is a fully offline, multilingual communication app for Android.**
 
-Unmute turns a phone or tablet into a symbol-based communication board. People who can't (or don't
-want to) speak can build sentences by tapping cards — symbols, emoji, or their own photos — and let
-the device speak for them. Caregivers can customize the board freely, so it grows and adapts with the
-user.
+Unmute is designed to be a simple and intuitive application that turns a phone or tablet into a symbol-based communication board. People who can't (or don't want to) speak can build sentences by tapping cards — symbols, emoji, or their own photos — and let the device speak for them. Users or caregivers can customize the board freely, so it grows and adapts with the user.
 
 ---
 
 ## Why Unmute?
 
-- **100% offline.** No network, no accounts, nothing leaves the device. Symbols, text, and speech all
-  run locally.
+- **100% offline.** Unmute doesn't need you to be constantly connected to a network, doesn't need you to set up an account, nothing leaves the device.
 - **Language support.** The app currently supports two languages (English and Spanish) and the app language can be changed at any time.
-  app language can be switched at any time.
-- **Made to be customized.** Add, edit, reorder, or remove cards and sections, and use photos from
-  your own gallery.
+- **Made to be customized.** Add, edit, reorder, or remove cards and sections, and use photos from your own gallery, helping you to adapt to your, your child or care recipient's needs.
 - **Simple and robust.** Big buttons, clear colors, no clutter.
-
----
-
-## Getting started
-
-1. **Tap cards** to add them to the sentence bar at the top.
-2. Hit **Speak** to hear the sentence through your chosen speaker, headphones, or Bluetooth device.
-3. Tap the **lock** icon to customize the board (see below).
-4. Configure language, layout, speech, and audio in **Settings**.
+- **100% free.** Unmute is (and will always be) free. As communication is a right, you are free to download and share this application with the cost of 0.00$! You will never be asked to pay for it. 
 
 ---
 
 ## Features
 
 ### Communicating
-- **Symbol grid boards** with color-coded sections: Greetings, People, Feelings, Food & Drink,
-  Actions, Places, Things, and Body.
+- **Symbol grid boards** with color-coded sections: Greetings, People, Feelings, Food & Drink, Actions, Places, Things, and Body (you can add more!).
 - **Sentence bar** — tap cards to build a sentence, or type it directly, then hit **Speak**.
 - **Autospeak**: the device can read each word aloud the moment you add it.
 - Hundreds of symbols and emoji to choose from, with English and Spanish labels.
@@ -47,11 +32,9 @@ user.
 - **Add** and **remove sections**.
 
 ### Layout & speech
-- **Grid profiles**: "Big" for few, large buttons; "Small" for a dense grid; plus your own custom
-  profiles.
-- Card text size can be set to Small, Normal, or Large.
-- Choose where speech comes out — **speaker, wired headphones, or Bluetooth** — so the user can keep
-  headphones on while their voice plays through the speakers.
+- **Grid profiles**: "Big" for few, large buttons; "Small" for a dense grid; plus your own custom profiles.
+- **Card text size can be changed** to adapt your needs.
+- **Use your communication device without disconnecting your headphones**, Unmute lets you to select the output device, allowing you to communicate while you keep your headphones on.
 - Adjust TTS speech **rate** and **pitch**, and test the sound from Settings.
 
 ---
@@ -59,16 +42,21 @@ user.
 ## Settings
 
 - **Language** — English, Spanish, or follow the system.
-- **Grid layout** — choose or create grid profiles.
-- **Card text size** — Small / Normal / Large.
+- **Grid layout (card size)** — choose or create grid profiles.
+- **Card text size** — You can choose between 5 different text sizes.
 - **Speech** — rate, pitch, autospeak, test sound.
-- **Audio output** — automatic, speakers, wired, or Bluetooth headphones.
+- **Audio output** — automatic, device speakers, headphones or external speakers.
+- **Secure Mode** locks settings to avoid the user to accidentally edit their board.
 
 ---
 
 ## Privacy
 
 Unmute is fully offline. It never asks for an account, never connects to the internet, and doesn't need storage permissions to use your own photos (it uses the system photo picker instead).
+
+### Import/Export data
+
+Unmute has the option to import and export your data to make it easier to change or backup your device's cards and settings. We make it fully offline, making a file with all needed data and that is completely stored in your device. We don't have access to that data, whatever that can be stored on it is yours and yours only. 
 
 ---
 
