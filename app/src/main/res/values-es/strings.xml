@@ -89,4 +89,19 @@
     <string name="data_imported">Datos importados</string>
     <string name="export_failed">No se pudo exportar</string>
     <string name="import_failed">No se pudo importar</string>
+
+    <string name="about">Acerca de</string>
+    <string name="about_open">Acerca de Unmute</string>
+    <string name="about_version">Versión %1$s</string>
+    <string name="about_description">Unmute es una app de comunicación basada en símbolos, totalmente sin conexión. No necesita cuenta, nunca se conecta a internet y tus datos nunca salen del dispositivo.</string>
+    <string name="about_privacy">Privacidad</string>
+    <string name="about_privacy_text">100%% sin conexión. Sin cuentas, sin rastreo y sin necesidad de internet.</string>
+    <string name="about_contact">Contacto</string>
+    <string name="about_email">Escribir al desarrollador</string>
+    <string name="about_source_code">Código fuente</string>
+    <string name="about_license">Licencia</string>
+    <string name="about_license_text">Unmute es software libre: puedes redistribuirlo y/o modificarlo bajo los términos de la Licencia Pública General de GNU versión 3.</string>
+    <string name="about_symbols">Símbolos</string>
+    <string name="about_symbols_text">Los símbolos provienen del conjunto Mulberry Symbols (https://mulberrysymbols.org), © Mulberry Symbols, con licencia CC BY-SA 4.0.</string>
+    <string name="about_visit_site">Visitar mulberrysymbols.org</string>
 </resources>

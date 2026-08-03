@@ -138,7 +138,7 @@ Language-aware (EN/ES).
 10. ✅ Unit tests (TTS WavParser, Localization, Backup serialization) + final `assembleDebug`
 11. ⏳ Text mode + word prediction (offline, language-aware) — deferred
 12. ⏳ Multi-board support (schema ready, single board used today)
-13. ⏳ About screen with Mulberry attribution
+13. ✅ About screen (version, privacy, contact email, source code, license, Mulberry attribution)
 
 ## Known risks / notes
 

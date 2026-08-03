@@ -89,4 +89,19 @@
     <string name="data_imported">Data imported</string>
     <string name="export_failed">Export failed</string>
     <string name="import_failed">Import failed</string>
+
+    <string name="about">About</string>
+    <string name="about_open">About Unmute</string>
+    <string name="about_version">Version %1$s</string>
+    <string name="about_description">Unmute is a fully offline, symbol-based communication app. It never needs an account, never connects to the internet, and your data never leaves your device.</string>
+    <string name="about_privacy">Privacy</string>
+    <string name="about_privacy_text">100%% offline. No accounts, no tracking, no internet connection required.</string>
+    <string name="about_contact">Contact</string>
+    <string name="about_email">Email the developer</string>
+    <string name="about_source_code">Source code</string>
+    <string name="about_license">License</string>
+    <string name="about_license_text">Unmute is free software: you can redistribute it and/or modify it under the terms of the GNU General Public License version 3.</string>
+    <string name="about_symbols">Symbols</string>
+    <string name="about_symbols_text">The symbols are from the Mulberry Symbols set (https://mulberrysymbols.org), © Mulberry Symbols, licensed under CC BY-SA 4.0.</string>
+    <string name="about_visit_site">Visit mulberrysymbols.org</string>
 </resources>

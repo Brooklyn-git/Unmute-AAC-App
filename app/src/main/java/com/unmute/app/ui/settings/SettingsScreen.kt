@@ -17,6 +17,7 @@ import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Info
 import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
@@ -71,6 +72,7 @@ import java.util.Locale
 fun SettingsScreen(
     viewModel: SettingsViewModel,
     onBack: () -> Unit,
+    onOpenAbout: () -> Unit,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var showSecureConfirm by remember { mutableStateOf(false) }
@@ -282,6 +284,22 @@ fun SettingsScreen(
                             modifier = Modifier.padding(start = 8.dp),
                         )
                     }
+                }
+            }
+
+            item { SectionHeader(stringResource(R.string.about)) }
+            item {
+                Button(
+                    onClick = onOpenAbout,
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                ) {
+                    Icon(Icons.Default.Info, contentDescription = null)
+                    Text(
+                        text = stringResource(R.string.about_open),
+                        modifier = Modifier.padding(start = 8.dp),
+                    )
                 }
             }
         }

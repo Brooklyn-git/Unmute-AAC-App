@@ -20,6 +20,7 @@ import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.ui.AppViewModelFactory
 import com.unmute.app.ui.board.BoardScreen
 import com.unmute.app.ui.board.BoardViewModel
+import com.unmute.app.ui.settings.AboutScreen
 import com.unmute.app.ui.settings.SettingsScreen
 import com.unmute.app.ui.theme.UnmuteTheme
 import java.util.Locale
@@ -74,7 +75,7 @@ class MainActivity : ComponentActivity() {
     }
 }
 
-private enum class AppScreen { Board, Settings }
+private enum class AppScreen { Board, Settings, About }
 
 @Composable
 private fun AppNavigation() {
@@ -97,6 +98,9 @@ private fun AppNavigation() {
         AppScreen.Settings -> SettingsScreen(
             viewModel = viewModel(factory = factory),
             onBack = { screen = AppScreen.Board },
+            onOpenAbout = { screen = AppScreen.About },
         )
+
+        AppScreen.About -> AboutScreen(onBack = { screen = AppScreen.Settings })
     }
 }
