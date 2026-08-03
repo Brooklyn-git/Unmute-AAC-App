@@ -10,6 +10,10 @@
     <string name="language_english">Inglés</string>
     <string name="language_spanish">Español</string>
 
+    <string name="secure_mode">Modo seguro</string>
+    <string name="secure_mode_dialog_message">Cuando actives el &quot;Modo seguro&quot; ocultarás y bloquearás los ajustes. Para desbloquearlos debes pulsar el candado tres veces.</string>
+    <string name="accept">Aceptar</string>
+
     <string name="grid_layout">Distribución de la cuadrícula</string>
     <string name="grid_columns_format">%1$d columnas</string>
     <string name="add_columns">Añadir columnas</string>

@@ -15,6 +15,8 @@ import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
+import androidx.compose.material3.Checkbox
+import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.DropdownMenu
 import androidx.compose.material3.DropdownMenuItem
 import androidx.compose.material3.ExperimentalMaterial3Api
@@ -30,6 +32,7 @@ import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
+import androidx.compose.material3.TextButton
 import androidx.compose.material3.TopAppBar
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.DisposableEffect
@@ -60,6 +63,7 @@ fun SettingsScreen(
     onBack: () -> Unit,
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    var showSecureConfirm by remember { mutableStateOf(false) }
 
     val context = LocalContext.current
     var ttsEngineLabel by remember { mutableStateOf<String?>(null) }
@@ -126,6 +130,19 @@ fun SettingsScreen(
                 )
             }
 
+            item {
+                SecureModeRow(
+                    checked = settings.secureMode,
+                    onCheckedChange = { enabled ->
+                        if (enabled && !settings.secureMode) {
+                            showSecureConfirm = true
+                        } else {
+                            viewModel.setSecureMode(enabled)
+                        }
+                    },
+                )
+            }
+
             item { SectionHeader(stringResource(R.string.speech)) }
             item {
                 TtsEngineDropdown(
@@ -180,6 +197,27 @@ fun SettingsScreen(
                 }
             }
         }
+    }
+
+    if (showSecureConfirm) {
+        AlertDialog(
+            onDismissRequest = { showSecureConfirm = false },
+            title = { Text(stringResource(R.string.secure_mode)) },
+            text = { Text(stringResource(R.string.secure_mode_dialog_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.setSecureMode(true)
+                    showSecureConfirm = false
+                }) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showSecureConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
     }
 }
 
@@ -259,6 +297,24 @@ private fun TtsEngineDropdown(
                 .matchParentSize()
                 .clickable { expanded = true },
         )
+    }
+}
+
+@Composable
+private fun SecureModeRow(
+    checked: Boolean,
+    onCheckedChange: (Boolean) -> Unit,
+) {
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .clickable { onCheckedChange(!checked) }
+            .padding(horizontal = 16.dp, vertical = 4.dp),
+        verticalAlignment = Alignment.CenterVertically,
+        horizontalArrangement = Arrangement.SpaceBetween,
+    ) {
+        Text(text = stringResource(R.string.secure_mode), style = MaterialTheme.typography.bodyLarge)
+        Checkbox(checked = checked, onCheckedChange = onCheckedChange)
     }
 }
 

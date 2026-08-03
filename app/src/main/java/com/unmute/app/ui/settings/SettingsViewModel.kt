@@ -50,6 +50,10 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setAutospeak(enabled) }
     }
 
+    fun setSecureMode(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSecureMode(enabled) }
+    }
+
     fun setSpeechRate(rate: Float) {
         viewModelScope.launch { settingsRepository.setSpeechRate(rate) }
     }

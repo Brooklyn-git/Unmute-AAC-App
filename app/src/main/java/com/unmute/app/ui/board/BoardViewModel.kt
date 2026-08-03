@@ -149,6 +149,10 @@ class BoardViewModel(
         _editMode.value = !_editMode.value
     }
 
+    fun setEditMode(enabled: Boolean) {
+        _editMode.value = enabled
+    }
+
     fun onCardClick(card: CardEntity) {
         val phrase = cardPhrase(card)
         _sentence.update { appendPhrase(it, phrase) }

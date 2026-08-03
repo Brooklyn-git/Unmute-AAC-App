@@ -32,6 +32,7 @@ import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
+import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -66,7 +67,7 @@ fun BoardScreen(
     val columns by viewModel.activeColumns.collectAsStateWithLifecycle()
     val gridProfiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
-    val cardFontSize by viewModel.settings.collectAsStateWithLifecycle()
+    val settings by viewModel.settings.collectAsStateWithLifecycle()
 
     LaunchedEffect(categories) {
         if (selectedCategoryId == null && categories.isNotEmpty()) {
@@ -80,6 +81,28 @@ fun BoardScreen(
     var addingCard by remember { mutableStateOf(false) }
     var addingSection by remember { mutableStateOf(false) }
     var showGridEditor by remember { mutableStateOf(false) }
+
+    var secureUnlocked by rememberSaveable { mutableStateOf(false) }
+    var lockPressCount by rememberSaveable { mutableStateOf(0) }
+    LaunchedEffect(settings.secureMode) {
+        if (settings.secureMode) {
+            secureUnlocked = false
+            lockPressCount = 0
+        }
+    }
+    val unlocked = !settings.secureMode || secureUnlocked
+    val effectiveEditMode = editMode && unlocked
+    val onLockClick = {
+        if (settings.secureMode && !secureUnlocked) {
+            lockPressCount += 1
+            if (lockPressCount >= 3) {
+                secureUnlocked = true
+                viewModel.setEditMode(true)
+            }
+        } else {
+            viewModel.toggleEditMode()
+        }
+    }
 
     val context = LocalContext.current
     val snackbarHostState = remember { SnackbarHostState() }
@@ -105,7 +128,7 @@ fun BoardScreen(
                     )
                 },
                 actions = {
-                    if (editMode) {
+                    if (editMode && unlocked) {
                         IconButton(onClick = { showGridEditor = true }) {
                             Icon(
                                 Icons.Default.GridView,
@@ -113,19 +136,21 @@ fun BoardScreen(
                             )
                         }
                     }
-                    IconButton(onClick = viewModel::toggleEditMode) {
+                    IconButton(onClick = onLockClick) {
                         Icon(
-                            if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
+                            if (effectiveEditMode) Icons.Default.LockOpen else Icons.Default.Lock,
                             contentDescription = stringResource(
-                                if (editMode) R.string.done_editing else R.string.edit_board,
+                                if (effectiveEditMode) R.string.done_editing else R.string.edit_board,
                             ),
                         )
                     }
-                    IconButton(onClick = onOpenSettings) {
-                        Icon(
-                            Icons.Default.Settings,
-                            contentDescription = stringResource(R.string.settings),
-                        )
+                    if (unlocked) {
+                        IconButton(onClick = onOpenSettings) {
+                            Icon(
+                                Icons.Default.Settings,
+                                contentDescription = stringResource(R.string.settings),
+                            )
+                        }
                     }
                 },
                 colors = TopAppBarDefaults.topAppBarColors(
@@ -153,23 +178,23 @@ fun BoardScreen(
                 onSelect = viewModel::selectCategory,
                 onReorder = viewModel::reorderCategories,
                 onDeleteCategory = viewModel::deleteCategory,
-                editable = editMode,
+                editable = effectiveEditMode,
                 onAddSection = { addingSection = true },
             )
-            if (cards.isEmpty() && !editMode) {
+            if (cards.isEmpty() && !effectiveEditMode) {
                 EmptyState()
             } else {
                 ReorderableCardsGrid(
                     cards = cards,
                     selectedCategory = selectedCategory,
                     columns = columns,
-                    editMode = editMode,
+                    editMode = effectiveEditMode,
                     language = language,
-                    cardFontSize = cardFontSize.cardFontSize,
+                    cardFontSize = settings.cardFontSize,
                     onCardClick = onCardClick,
                     onEditCard = { editingCard = it },
                     onDeleteCard = viewModel::deleteCard,
-                    onAddCard = if (editMode && effectiveCategoryId != null) {
+                    onAddCard = if (effectiveEditMode && effectiveCategoryId != null) {
                         { addingCard = true }
                     } else {
                         null
@@ -231,9 +256,9 @@ fun BoardScreen(
     if (showGridEditor) {
         GridEditorSheet(
             profiles = gridProfiles,
-            activeProfileId = cardFontSize.activeGridProfileId,
+            activeProfileId = settings.activeGridProfileId,
             activeColumns = columns,
-            cardFontSize = cardFontSize.cardFontSize,
+            cardFontSize = settings.cardFontSize,
             onCardFontSizeChange = viewModel::setCardFontSize,
             onSelectProfile = viewModel::selectGridProfile,
             onAdjustColumns = viewModel::adjustActiveColumns,

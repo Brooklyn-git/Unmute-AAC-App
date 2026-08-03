@@ -25,6 +25,7 @@ data class AppSettings(
     val speechRate: Float = 1f,
     val speechPitch: Float = 1f,
     val cardFontSize: CardFontSize = CardFontSize.NORMAL,
+    val secureMode: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -43,6 +44,7 @@ class SettingsRepository(private val context: Context) {
             cardFontSize = prefs[KEY_CARD_FONT_SIZE]
                 ?.let { runCatching { CardFontSize.valueOf(it) }.getOrNull() }
                 ?: CardFontSize.NORMAL,
+            secureMode = prefs[KEY_SECURE_MODE] ?: false,
         )
     }
 
@@ -88,6 +90,10 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_CARD_FONT_SIZE] = size.name }
     }
 
+    suspend fun setSecureMode(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_SECURE_MODE] = enabled }
+    }
+
     private companion object {
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_GRID_PROFILE = longPreferencesKey("active_grid_profile")
@@ -98,5 +104,6 @@ class SettingsRepository(private val context: Context) {
         val KEY_SPEECH_RATE = floatPreferencesKey("speech_rate")
         val KEY_SPEECH_PITCH = floatPreferencesKey("speech_pitch")
         val KEY_CARD_FONT_SIZE = stringPreferencesKey("card_font_size")
+        val KEY_SECURE_MODE = booleanPreferencesKey("secure_mode")
     }
 }

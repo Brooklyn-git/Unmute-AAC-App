@@ -10,6 +10,10 @@
     <string name="language_english">English</string>
     <string name="language_spanish">Spanish</string>
 
+    <string name="secure_mode">Secure mode</string>
+    <string name="secure_mode_dialog_message">When you turn on &quot;Secure Mode&quot; you hide and lock settings. To unlock them you must press the lock three times.</string>
+    <string name="accept">Accept</string>
+
     <string name="grid_layout">Grid layout</string>
     <string name="grid_columns_format">%1$d columns</string>
     <string name="add_columns">Add columns</string>
