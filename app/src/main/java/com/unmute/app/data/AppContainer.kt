@@ -1,6 +1,7 @@
 package com.unmute.app.data
 
 import android.content.Context
+import com.unmute.app.data.backup.BackupManager
 import com.unmute.app.data.local.UnmuteDatabase
 import com.unmute.app.tts.TtsManager
 import kotlinx.coroutines.flow.first
@@ -18,6 +19,13 @@ class AppContainer(context: Context) {
     )
 
     val settingsRepository = SettingsRepository(context)
+
+    val backupManager = BackupManager(
+        context = context,
+        database = database,
+        boardRepository = boardRepository,
+        settingsRepository = settingsRepository,
+    )
 
     val ttsManager = TtsManager(
         context,

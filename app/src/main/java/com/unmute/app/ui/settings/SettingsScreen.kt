@@ -1,6 +1,9 @@
 package com.unmute.app.ui.settings
 
+import android.net.Uri
 import androidx.activity.compose.BackHandler
+import androidx.activity.compose.rememberLauncherForActivityResult
+import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
@@ -13,6 +16,8 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.ArrowDropDown
+import androidx.compose.material.icons.filled.Download
+import androidx.compose.material.icons.filled.Upload
 import androidx.compose.material.icons.filled.VolumeUp
 import androidx.compose.material3.Button
 import androidx.compose.material3.Checkbox
@@ -57,6 +62,9 @@ import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.ui.components.Stepper
+import java.text.SimpleDateFormat
+import java.util.Date
+import java.util.Locale
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -66,6 +74,7 @@ fun SettingsScreen(
 ) {
     val settings by viewModel.settings.collectAsStateWithLifecycle()
     var showSecureConfirm by remember { mutableStateOf(false) }
+    var pendingImportUri by remember { mutableStateOf<Uri?>(null) }
 
     val context = LocalContext.current
     var ttsEngineLabel by remember { mutableStateOf<String?>(null) }
@@ -91,6 +100,29 @@ fun SettingsScreen(
             }
             snackbarHostState.showSnackbar(message)
         }
+    }
+
+    LaunchedEffect(viewModel) {
+        viewModel.backupEvents.collect { event ->
+            when (event) {
+                is BackupEvent.Message -> snackbarHostState.showSnackbar(context.getString(event.resId))
+            }
+        }
+    }
+
+    val exportFileName = remember {
+        val date = SimpleDateFormat("yyyyMMdd-HHmmss", Locale.US).format(Date())
+        "unmute-backup-$date.unmute"
+    }
+    val exportLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.CreateDocument("application/zip"),
+    ) { uri ->
+        uri?.let(viewModel::exportData)
+    }
+    val importLauncher = rememberLauncherForActivityResult(
+        ActivityResultContracts.OpenDocument(),
+    ) { uri ->
+        pendingImportUri = uri
     }
 
     BackHandler(onBack = onBack)
@@ -219,6 +251,39 @@ fun SettingsScreen(
                     )
                 }
             }
+
+            item { SectionHeader(stringResource(R.string.data)) }
+            item {
+                Column(
+                    modifier = Modifier
+                        .fillMaxWidth()
+                        .padding(horizontal = 16.dp, vertical = 8.dp),
+                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                ) {
+                    Button(
+                        onClick = { exportLauncher.launch(exportFileName) },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.Upload, contentDescription = null)
+                        Text(
+                            text = stringResource(R.string.export_data),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                    Button(
+                        onClick = {
+                            importLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
+                        },
+                        modifier = Modifier.fillMaxWidth(),
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null)
+                        Text(
+                            text = stringResource(R.string.import_data),
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+            }
         }
     }
 
@@ -237,6 +302,27 @@ fun SettingsScreen(
             },
             dismissButton = {
                 TextButton(onClick = { showSecureConfirm = false }) {
+                    Text(stringResource(R.string.cancel))
+                }
+            },
+        )
+    }
+
+    pendingImportUri?.let { uri ->
+        AlertDialog(
+            onDismissRequest = { pendingImportUri = null },
+            title = { Text(stringResource(R.string.import_data)) },
+            text = { Text(stringResource(R.string.import_confirm_message)) },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.importData(uri)
+                    pendingImportUri = null
+                }) {
+                    Text(stringResource(R.string.accept))
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingImportUri = null }) {
                     Text(stringResource(R.string.cancel))
                 }
             },

@@ -34,6 +34,37 @@ class BoardRepository(
 
     suspend fun deleteCard(card: CardEntity) = cardDao.delete(card)
 
+    suspend fun getBoard(): BoardEntity? = boardDao.getFirst()
+
+    suspend fun getAllGridProfiles(): List<GridProfileEntity> = gridProfileDao.getAll()
+
+    suspend fun getCategories(boardId: Long): List<CategoryEntity> =
+        categoryDao.getCategories(boardId)
+
+    suspend fun getCards(categoryId: Long): List<CardEntity> =
+        cardDao.getCards(categoryId)
+
+    /**
+     * Clears all tables and restores the given content. Callers must wrap this
+     * in a Room transaction so it is atomic.
+     */
+    suspend fun replaceAll(
+        board: BoardEntity,
+        categories: List<CategoryEntity>,
+        cards: List<CardEntity>,
+        gridProfiles: List<GridProfileEntity>,
+    ) {
+        cardDao.deleteAll()
+        categoryDao.deleteAll()
+        gridProfileDao.deleteAll()
+        boardDao.deleteAll()
+        boardDao.insert(board)
+        categories.forEach { categoryDao.insert(it) }
+        cards.forEach { cardDao.insert(it) }
+        gridProfiles.forEach { gridProfileDao.insert(it) }
+    }
+
+
     suspend fun updateCardOrder(cards: List<CardEntity>) =
         cardDao.updateOrder(cards.mapIndexed { index, card -> card.id to index })
 

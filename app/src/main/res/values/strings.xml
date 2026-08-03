@@ -80,4 +80,13 @@
     <string name="audio_output_speaker">Always speakers</string>
     <string name="audio_output_wired">Wired headphones</string>
     <string name="audio_output_bluetooth">Bluetooth headphones</string>
+
+    <string name="data">Data</string>
+    <string name="export_data">Export data</string>
+    <string name="import_data">Import data</string>
+    <string name="import_confirm_message">Importing replaces all current data and settings. Continue?</string>
+    <string name="data_exported">Data exported</string>
+    <string name="data_imported">Data imported</string>
+    <string name="export_failed">Export failed</string>
+    <string name="import_failed">Import failed</string>
 </resources>

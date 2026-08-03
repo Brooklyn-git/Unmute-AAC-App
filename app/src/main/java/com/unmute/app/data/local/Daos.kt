@@ -16,8 +16,14 @@ interface BoardDao {
     @Query("SELECT * FROM boards WHERE id = :id")
     fun observeBoard(id: Long): Flow<BoardEntity?>
 
+    @Query("SELECT * FROM boards ORDER BY orderIndex LIMIT 1")
+    suspend fun getFirst(): BoardEntity?
+
     @Query("SELECT COUNT(*) FROM boards")
     suspend fun count(): Int
+
+    @Query("DELETE FROM boards")
+    suspend fun deleteAll()
 
     @Insert
     suspend fun insert(board: BoardEntity): Long
@@ -39,6 +45,9 @@ interface CategoryDao {
 
     @Query("SELECT * FROM categories WHERE id = :id")
     suspend fun getCategory(id: Long): CategoryEntity?
+
+    @Query("DELETE FROM categories")
+    suspend fun deleteAll()
 
     @Insert
     suspend fun insert(category: CategoryEntity): Long
@@ -72,6 +81,9 @@ interface CardDao {
     @Query("SELECT COUNT(*) FROM cards")
     suspend fun count(): Int
 
+    @Query("DELETE FROM cards")
+    suspend fun deleteAll()
+
     @Insert
     suspend fun insert(card: CardEntity): Long
 
@@ -95,11 +107,17 @@ interface GridProfileDao {
     @Query("SELECT * FROM grid_profiles ORDER BY isPreset DESC, id ASC")
     fun observeAll(): Flow<List<GridProfileEntity>>
 
+    @Query("SELECT * FROM grid_profiles ORDER BY isPreset DESC, id ASC")
+    suspend fun getAll(): List<GridProfileEntity>
+
     @Query("SELECT * FROM grid_profiles WHERE id = :id")
     suspend fun getById(id: Long): GridProfileEntity?
 
     @Query("SELECT COUNT(*) FROM grid_profiles")
     suspend fun count(): Int
+
+    @Query("DELETE FROM grid_profiles")
+    suspend fun deleteAll()
 
     @Insert
     suspend fun insert(profile: GridProfileEntity): Long

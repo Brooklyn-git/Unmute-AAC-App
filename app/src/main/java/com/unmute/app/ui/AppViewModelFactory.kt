@@ -22,6 +22,7 @@ class AppViewModelFactory(private val container: AppContainer) : ViewModelProvid
             SettingsViewModel(
                 container.settingsRepository,
                 container.ttsManager,
+                container.backupManager,
             ) as T
 
         else -> throw IllegalArgumentException("Unknown ViewModel class: ${modelClass.name}")

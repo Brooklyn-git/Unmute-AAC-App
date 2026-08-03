@@ -111,6 +111,28 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SECURE_RESET_SECONDS] = value }
     }
 
+    /** Overwrites every stored setting with [appSettings]. */
+    suspend fun restore(appSettings: AppSettings) {
+        context.dataStore.edit { prefs ->
+            prefs[KEY_LANGUAGE] = appSettings.language.name
+            prefs[KEY_GRID_PROFILE] = appSettings.activeGridProfileId
+            prefs[KEY_AUDIO_OUTPUT] = appSettings.audioOutput
+            if (appSettings.ttsEngine == null) {
+                prefs.remove(KEY_TTS_ENGINE)
+            } else {
+                prefs[KEY_TTS_ENGINE] = appSettings.ttsEngine
+            }
+            prefs[KEY_AUTOSPEAK] = appSettings.autospeak
+            prefs[KEY_SPEAK_ON_ADD] = appSettings.speakOnAdd
+            prefs[KEY_SPEECH_RATE] = appSettings.speechRate
+            prefs[KEY_SPEECH_PITCH] = appSettings.speechPitch
+            prefs[KEY_CARD_FONT_SIZE] = appSettings.cardFontSize.name
+            prefs[KEY_SECURE_MODE] = appSettings.secureMode
+            prefs[KEY_SECURE_TAP_COUNT] = appSettings.secureTapCount
+            prefs[KEY_SECURE_RESET_SECONDS] = appSettings.secureResetSeconds
+        }
+    }
+
     companion object {
         val KEY_LANGUAGE = stringPreferencesKey("language")
         val KEY_GRID_PROFILE = longPreferencesKey("active_grid_profile")

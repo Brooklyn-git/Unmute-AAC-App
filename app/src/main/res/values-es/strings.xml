@@ -80,4 +80,13 @@
     <string name="audio_output_speaker">Siempre altavoces</string>
     <string name="audio_output_wired">Auriculares con cable</string>
     <string name="audio_output_bluetooth">Auriculares Bluetooth</string>
+
+    <string name="data">Datos</string>
+    <string name="export_data">Exportar datos</string>
+    <string name="import_data">Importar datos</string>
+    <string name="import_confirm_message">Importar reemplazará todos los datos y ajustes actuales. ¿Continuar?</string>
+    <string name="data_exported">Datos exportados</string>
+    <string name="data_imported">Datos importados</string>
+    <string name="export_failed">No se pudo exportar</string>
+    <string name="import_failed">No se pudo importar</string>
 </resources>
