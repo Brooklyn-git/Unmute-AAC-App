@@ -5,7 +5,6 @@ import androidx.lifecycle.viewModelScope
 import com.unmute.app.data.AppSettings
 import com.unmute.app.data.SettingsRepository
 import com.unmute.app.domain.model.AppLanguage
-import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
@@ -49,10 +48,6 @@ class SettingsViewModel(
 
     fun setAutospeak(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setAutospeak(enabled) }
-    }
-
-    fun setCardFontSize(size: CardFontSize) {
-        viewModelScope.launch { settingsRepository.setCardFontSize(size) }
     }
 
     fun setSpeechRate(rate: Float) {

@@ -165,9 +165,11 @@ fun ReorderableCardsGrid(
                         label = card.label(language),
                         accentColor = accentColor,
                         labelFontSize = when (cardFontSize) {
+                            CardFontSize.EXTRA_SMALL -> 12.sp
                             CardFontSize.SMALL -> 14.sp
+                            CardFontSize.NORMAL -> 16.sp
                             CardFontSize.LARGE -> 20.sp
-                            else -> 16.sp
+                            CardFontSize.EXTRA_LARGE -> 24.sp
                         },
                         onClick = { if (editMode) onEditCard(card) else onCardClick(card) },
                     )

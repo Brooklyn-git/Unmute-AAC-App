@@ -10,6 +10,8 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.lazy.LazyColumn
+import androidx.compose.foundation.lazy.items
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
 import androidx.compose.material.icons.filled.Delete
@@ -24,6 +26,7 @@ import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.ModalBottomSheet
 import androidx.compose.material3.OutlinedButton
 import androidx.compose.material3.RadioButton
+import androidx.compose.material3.Slider
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
@@ -39,7 +42,9 @@ import androidx.compose.ui.unit.dp
 import com.unmute.app.R
 import com.unmute.app.data.BoardRepository
 import com.unmute.app.data.local.GridProfileEntity
+import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.ui.settings.GridProfileDialog
+import kotlin.math.roundToInt
 
 @OptIn(ExperimentalMaterial3Api::class)
 @Composable
@@ -47,6 +52,8 @@ fun GridEditorSheet(
     profiles: List<GridProfileEntity>,
     activeProfileId: Long,
     activeColumns: Int,
+    cardFontSize: CardFontSize,
+    onCardFontSizeChange: (CardFontSize) -> Unit,
     onSelectProfile: (Long) -> Unit,
     onAdjustColumns: (Int) -> Unit,
     onAddProfile: (String, Int) -> Unit,
@@ -63,22 +70,36 @@ fun GridEditorSheet(
                 .padding(horizontal = 16.dp)
                 .navigationBarsPadding(),
         ) {
-            Text(
-                text = stringResource(R.string.grid_layout),
-                style = MaterialTheme.typography.titleLarge,
-                fontWeight = FontWeight.Bold,
-                modifier = Modifier.padding(bottom = 8.dp),
+            SheetSectionHeader(stringResource(R.string.card_text_size))
+            Slider(
+                value = sliderValueFor(cardFontSize),
+                onValueChange = { onCardFontSizeChange(cardFontSizeFor(it)) },
+                valueRange = 0f..4f,
+                steps = 3,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(vertical = 4.dp),
             )
-            profiles.forEach { profile ->
-                GridProfileRow(
-                    profile = profile,
-                    isActive = profile.id == activeProfileId,
-                    onSelect = { onSelectProfile(profile.id) },
-                    onEdit = { dialog = GridEditorDialogState.Edit(profile) },
-                    onDelete = { onDeleteProfile(profile.id) },
-                )
+            Spacer(Modifier.height(8.dp))
+
+            SheetSectionHeader(stringResource(R.string.grid_layout))
+            LazyColumn(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .weight(1f, fill = false),
+            ) {
+                items(profiles, key = { it.id }) { profile ->
+                    GridProfileRow(
+                        profile = profile,
+                        isActive = profile.id == activeProfileId,
+                        onSelect = { onSelectProfile(profile.id) },
+                        onEdit = { dialog = GridEditorDialogState.Edit(profile) },
+                        onDelete = { onDeleteProfile(profile.id) },
+                    )
+                }
             }
             HorizontalDivider(modifier = Modifier.padding(vertical = 8.dp))
+
             Row(
                 modifier = Modifier.fillMaxWidth(),
                 verticalAlignment = Alignment.CenterVertically,
@@ -95,6 +116,7 @@ fun GridEditorSheet(
                 )
             }
             Spacer(Modifier.height(8.dp))
+
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val active = profiles.firstOrNull { it.id == activeProfileId }
                 OutlinedButton(
@@ -166,6 +188,17 @@ fun GridEditorSheet(
 }
 
 @Composable
+private fun SheetSectionHeader(text: String) {
+    Text(
+        text = text,
+        style = MaterialTheme.typography.titleMedium,
+        fontWeight = FontWeight.Bold,
+        color = MaterialTheme.colorScheme.primary,
+        modifier = Modifier.padding(top = 8.dp, bottom = 4.dp),
+    )
+}
+
+@Composable
 private fun GridProfileRow(
     profile: GridProfileEntity,
     isActive: Boolean,
@@ -230,6 +263,22 @@ private fun ColumnStepper(
             Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_columns))
         }
     }
+}
+
+private fun sliderValueFor(size: CardFontSize): Float = when (size) {
+    CardFontSize.EXTRA_SMALL -> 0f
+    CardFontSize.SMALL -> 1f
+    CardFontSize.NORMAL -> 2f
+    CardFontSize.LARGE -> 3f
+    CardFontSize.EXTRA_LARGE -> 4f
+}
+
+private fun cardFontSizeFor(value: Float): CardFontSize = when (value.roundToInt()) {
+    0 -> CardFontSize.EXTRA_SMALL
+    1 -> CardFontSize.SMALL
+    2 -> CardFontSize.NORMAL
+    3 -> CardFontSize.LARGE
+    else -> CardFontSize.EXTRA_LARGE
 }
 
 private sealed interface GridEditorDialogState {

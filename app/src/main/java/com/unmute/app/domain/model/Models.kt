@@ -18,7 +18,9 @@ enum class AppLanguage {
 }
 
 enum class CardFontSize {
+    EXTRA_SMALL,
     SMALL,
     NORMAL,
     LARGE,
+    EXTRA_LARGE,
 }

@@ -9,6 +9,7 @@ import com.unmute.app.data.local.BoardEntity
 import com.unmute.app.data.local.CardEntity
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileEntity
+import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.tts.TtsIssue
@@ -104,6 +105,10 @@ class BoardViewModel(
                 settingsRepository.setActiveGridProfile(BoardRepository.BIG_PROFILE_ID)
             }
         }
+    }
+
+    fun setCardFontSize(size: CardFontSize) {
+        viewModelScope.launch { settingsRepository.setCardFontSize(size) }
     }
 
     /** Adds [delta] columns to the active grid profile, creating a custom copy if it is a preset. */

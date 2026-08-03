@@ -51,7 +51,6 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unmute.app.R
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
-import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.tts.TtsIssue
 
 @OptIn(ExperimentalMaterial3Api::class)
@@ -124,25 +123,6 @@ fun SettingsScreen(
                     label = stringResource(R.string.language_spanish),
                     selected = settings.language == AppLanguage.ES,
                     onClick = { viewModel.setLanguage(AppLanguage.ES) },
-                )
-            }
-
-            item { SectionHeader(stringResource(R.string.card_text_size)) }
-            item {
-                FontSizeRow(
-                    label = stringResource(R.string.font_size_small),
-                    selected = settings.cardFontSize == CardFontSize.SMALL,
-                    onClick = { viewModel.setCardFontSize(CardFontSize.SMALL) },
-                )
-                FontSizeRow(
-                    label = stringResource(R.string.font_size_normal),
-                    selected = settings.cardFontSize == CardFontSize.NORMAL,
-                    onClick = { viewModel.setCardFontSize(CardFontSize.NORMAL) },
-                )
-                FontSizeRow(
-                    label = stringResource(R.string.font_size_large),
-                    selected = settings.cardFontSize == CardFontSize.LARGE,
-                    onClick = { viewModel.setCardFontSize(CardFontSize.LARGE) },
                 )
             }
 
@@ -298,15 +278,6 @@ private fun ToggleRow(
         Text(text = label, style = MaterialTheme.typography.bodyLarge)
         Switch(checked = checked, onCheckedChange = onCheckedChange)
     }
-}
-
-@Composable
-private fun FontSizeRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    AudioOutputRow(label = label, selected = selected, onClick = onClick)
 }
 
 @Composable

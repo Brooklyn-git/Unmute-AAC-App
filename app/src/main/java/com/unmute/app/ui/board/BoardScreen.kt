@@ -233,6 +233,8 @@ fun BoardScreen(
             profiles = gridProfiles,
             activeProfileId = cardFontSize.activeGridProfileId,
             activeColumns = columns,
+            cardFontSize = cardFontSize.cardFontSize,
+            onCardFontSizeChange = viewModel::setCardFontSize,
             onSelectProfile = viewModel::selectGridProfile,
             onAdjustColumns = viewModel::adjustActiveColumns,
             onAddProfile = viewModel::addGridProfile,
