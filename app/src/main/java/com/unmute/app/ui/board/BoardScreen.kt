@@ -92,6 +92,7 @@ fun BoardScreen(
             secureUnlocked = false
             lockPressCount = 0
             showSecureHint = false
+            viewModel.setEditMode(false)
         }
     }
     LaunchedEffect(lockPressCount) {
@@ -106,10 +107,9 @@ fun BoardScreen(
             lockPressCount = 0
         }
     }
-    val unlocked = !settings.secureMode || secureUnlocked
-    val effectiveEditMode = editMode && unlocked
+    val unlocked = !settings.secureMode || editMode
     val onLockClick = {
-        if (settings.secureMode && !secureUnlocked) {
+        if (settings.secureMode && !editMode) {
             showSecureHint = true
             lockPressCount += 1
             if (lockPressCount >= settings.secureTapCount) {
@@ -118,11 +118,15 @@ fun BoardScreen(
                 showSecureHint = false
             }
         } else {
+            if (settings.secureMode) {
+                secureUnlocked = false
+                lockPressCount = 0
+            }
             viewModel.toggleEditMode()
         }
     }
-    val secureTapHint = if (settings.secureMode && !secureUnlocked && showSecureHint) {
-        val remaining = settings.secureTapCount - lockPressCount
+    val secureTapHint = if (settings.secureMode && !editMode && showSecureHint) {
+        val remaining = (settings.secureTapCount - lockPressCount).coerceAtLeast(1)
         if (remaining == 1) {
             stringResource(R.string.secure_tap_hint_one)
         } else {
@@ -166,9 +170,9 @@ fun BoardScreen(
                     }
                     IconButton(onClick = onLockClick) {
                         Icon(
-                            if (effectiveEditMode) Icons.Default.LockOpen else Icons.Default.Lock,
+                            if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
                             contentDescription = stringResource(
-                                if (effectiveEditMode) R.string.done_editing else R.string.edit_board,
+                                if (editMode) R.string.done_editing else R.string.edit_board,
                             ),
                         )
                     }
@@ -206,23 +210,23 @@ fun BoardScreen(
                 onSelect = viewModel::selectCategory,
                 onReorder = viewModel::reorderCategories,
                 onDeleteCategory = viewModel::deleteCategory,
-                editable = effectiveEditMode,
+                editable = editMode,
                 onAddSection = { addingSection = true },
             )
-            if (cards.isEmpty() && !effectiveEditMode) {
+            if (cards.isEmpty() && !editMode) {
                 EmptyState()
             } else {
                 ReorderableCardsGrid(
                     cards = cards,
                     selectedCategory = selectedCategory,
                     columns = columns,
-                    editMode = effectiveEditMode,
+                    editMode = editMode,
                     language = language,
                     cardFontSize = settings.cardFontSize,
                     onCardClick = onCardClick,
                     onEditCard = { editingCard = it },
                     onDeleteCard = viewModel::deleteCard,
-                    onAddCard = if (effectiveEditMode && effectiveCategoryId != null) {
+                    onAddCard = if (editMode && effectiveCategoryId != null) {
                         { addingCard = true }
                     } else {
                         null
