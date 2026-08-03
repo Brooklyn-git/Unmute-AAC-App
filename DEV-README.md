@@ -67,6 +67,9 @@ app/src/main/java/com/unmute/app/
 ./gradlew testDebugUnitTest        # runs the unit tests
 ```
 
+- **JDK:** AGP 8.x cannot run on JDK 26. Use a JDK 21 for the build and point Gradle at it
+  with `JAVA_HOME` (e.g. `export JAVA_HOME=/path/to/jdk-21`); do **not** hardcode a machine path
+  in `gradle.properties` (F-Droid build servers set their own `JAVA_HOME`).
 - Debug builds need no signing config — install the APK directly (minSdk 26, targetSdk 36).
 - The project uses a version catalog (`gradle/libs.versions.toml`).
 - Room schemas are exported to `app/schemas/` and committed; bump the database version and add a
