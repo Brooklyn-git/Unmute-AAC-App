@@ -19,11 +19,14 @@ own photos). Targets both children and adults, with configurable layouts.
 ## Core features (v1)
 
 - Symbol grid boards with category navigation
-- Sentence building bar (tap cards → sentence → speak)
-- Text input + word prediction (offline, language-aware)
-- Customizable boards (caregiver can add/edit/reorder cards, use symbols or own photos)
+- Sentence building bar (tap cards → sentence → speak, editable text)
+- Customizable boards (caregiver can add/edit/reorder cards, use symbols, emoji, or own photos)
 - Text-to-speech via Android `TextToSpeech` API (offline)
 - Audio output routing: **speaker by default**, user-selectable output
+- Grid profiles: Big / Small presets + user Custom profiles (rename/edit/delete)
+- Secure mode: multi-tap lock on edit mode (configurable tap count + reset window)
+- Import / export backup (`.unmute` zip: manifest + card photos + settings)
+- ~~Text input + word prediction~~ (offline, language-aware) — **deferred**
 
 ## Tech stack
 
@@ -36,21 +39,40 @@ own photos). Targets both children and adults, with configurable layouts.
 - Custom `AudioTrack` playback for forced output routing
 - Photo Picker (`GetContent`) — custom pictures with no storage permissions
 - Tests: JUnit + kotlinx-coroutines-test
+- kotlinx-serialization — backup manifest (JSON) + `java.util.zip` for `.unmute` files
 - MVVM + single `AppContainer` for DI (no Hilt — keep it simple)
 
 ## Data model
 
-- `Board (name, order)` → `Category (name_en/es, color, order)` → `Card (label_en/es, phrase_en/es, symbolPath | photoUri, color, order)`
+- `Board (name, order)` → `Category (name_en/es, color, order)` → `Card (label_en/es, phrase_en/es, symbolPath | photoUri | emoji, color, order)`
 - `GridProfile (name, columns, isPreset)` — "Big", "Small", plus user "Custom" profiles
-- `Settings` (DataStore): language, active grid profile, audio output, TTS voice/rate/pitch, autospeak
-- First launch seeds a default board with core categories (Greetings, People, Food & Drink, Feelings, Actions, Places, Things) using Mulberry symbols with EN + ES labels.
+- `Settings` (DataStore): language, active grid profile, audio output, TTS engine/rate/pitch, autospeak, card font size, secure mode (tap count + reset window)
+- First launch seeds a default board with core categories (Greetings, People, Food & Drink, Feelings, Actions, Places, Things, Body) using Mulberry symbols with EN + ES labels. The app currently uses a **single board** (the `boards` table is kept for future multi-board support).
 
 ## Screens / UX
 
 1. **Board screen** — sentence bar on top, category tabs, card grid. Tap card → appended to sentence (+ optional per-word speech); Speak / Clear / Backspace buttons.
-2. **Text mode** — keyboard + prediction strip + Speak.
-3. **Edit mode (caregiver)** — add/edit/delete/reorder cards & categories; pick a Mulberry symbol or own photo; edit bilingual labels; optional PIN gate.
-4. **Settings** — language, grid profiles, TTS voice/rate/pitch, audio output (+ test sound), autospeak.
+2. **Edit mode** — add/edit/delete/reorder cards & sections; pick a Mulberry symbol, emoji (with search), or own photo; edit bilingual labels; drag-to-reorder cards and category tabs. Gated by the lock button (see Secure mode).
+3. **Grid editor** — switch between grid profiles, edit/delete Custom profiles, adjust the active profile's columns, and set card text size (5 levels via slider + stepper).
+4. **Settings** — language, secure mode, TTS engine/rate/pitch (+ test sound), audio output, autospeak, import/export backup.
+
+### Secure mode
+
+Edit mode is gated behind a **multi-tap lock** (no PIN): the lock must be tapped N times within a time
+window to unlock editing. Configurable in Settings:
+- **Tap count** (1–10, default 3) and **reset tap count (in seconds)** (1–10, default 2).
+- Turning secure mode on shows a confirmation dialog; it applies immediately.
+- Text in the bottom of the screen shows how many more taps are needed.
+
+### Backup (import/export)
+
+Full data backup/restore from Settings under **Data**:
+- Export writes a `.unmute` file (a ZIP) via the system document picker. Default filename
+  `unmute-backup-YYYYMMDD-HHMMSS.unmute`.
+- Contents: `backup.json` manifest (board, categories, cards, grid profiles, settings) + card
+  photos under `photos/`.
+- Import reads the ZIP, validates it (version, categories present, card/category references), then
+  atomically replaces all data and restores settings in one DB transaction.
 
 ## Grid profiles
 
@@ -60,6 +82,8 @@ own photos). Targets both children and adults, with configurable layouts.
   - **Small** — dense grid
 - **Custom profiles:** pressing "Add custom" creates a **copy of the currently active profile's layout**, which the user can then modify (change columns, rename; default name "Custom"). The original profile is never modified. Same behavior regardless of which profile was active (Big, Small, or another custom).
 - Custom profiles can be edited, renamed, and deleted. Presets cannot be modified or deleted.
+- Editing happens in a **bottom sheet** opened from the board screen (grid layout + card text size).
+  A scrollbar appears when there are more profiles than fit (3 rows).
 
 ## Multi-language (English + Spanish)
 
@@ -102,15 +126,19 @@ Language-aware (EN/ES).
 
 ## Milestones
 
-1. Project scaffold "Unmute" → build passing (build after every change, per AGENTS.md)
-2. Data layer: Room schema (bilingual cards, grid profiles) + seeded default board
-3. Board UI + grid profiles (Big/Small/Custom)
-4. TTS + custom audio routing (speaker-by-default, output selection, test sound)
-5. Sentence bar
-6. Text input + prediction (language-aware)
-7. Customization (edit mode, photo picker, bilingual label editing)
-8. Settings + accessibility polish
-9. Unit tests + final `assembleDebug`
+1. ✅ Project scaffold "Unmute" → build passing (build after every change, per AGENTS.md)
+2. ✅ Data layer: Room schema (bilingual cards, grid profiles) + seeded default board
+3. ✅ Board UI + grid profiles (Big/Small/Custom) + grid editor bottom sheet + card text size
+4. ✅ TTS + custom audio routing (speaker-by-default, output selection, test sound, engine select, rate/pitch)
+5. ✅ Sentence bar (editable text field, speak/clear/backspace)
+6. ✅ Customization (edit mode, photo picker, symbol + emoji picker with search, bilingual label editing, reorder cards & sections, add/remove sections)
+7. ✅ Secure mode (multi-tap lock with configurable tap count + reset window)
+8. ✅ Settings + accessibility polish (immediate language switch, autospeak, speak-on-add)
+9. ✅ Backup/restore: import/export `.unmute` (manifest + photos + settings)
+10. ✅ Unit tests (TTS WavParser, Localization, Backup serialization) + final `assembleDebug`
+11. ⏳ Text mode + word prediction (offline, language-aware) — deferred
+12. ⏳ Multi-board support (schema ready, single board used today)
+13. ⏳ About screen with Mulberry attribution
 
 ## Known risks / notes
 
