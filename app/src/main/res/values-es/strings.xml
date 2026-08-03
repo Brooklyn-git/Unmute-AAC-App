@@ -16,6 +16,8 @@
     <string name="remove_columns">Quitar columnas</string>
     <string name="done">Listo</string>
     <string name="card_text_size">Tamaño del texto de tarjetas</string>
+    <string name="font_size_decrease">Reducir tamaño del texto</string>
+    <string name="font_size_increase">Aumentar tamaño del texto</string>
     <string name="add_custom_layout">Añadir distribución personalizada</string>
     <string name="new_layout">Nueva distribución</string>
     <string name="edit_layout">Editar distribución</string>

@@ -71,15 +71,27 @@ fun GridEditorSheet(
                 .navigationBarsPadding(),
         ) {
             SheetSectionHeader(stringResource(R.string.card_text_size))
-            Slider(
-                value = sliderValueFor(cardFontSize),
-                onValueChange = { onCardFontSizeChange(cardFontSizeFor(it)) },
-                valueRange = 0f..4f,
-                steps = 3,
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(vertical = 4.dp),
-            )
+            Row(
+                modifier = Modifier.fillMaxWidth(),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Slider(
+                    value = sliderValueFor(cardFontSize),
+                    onValueChange = { onCardFontSizeChange(cardFontSizeFor(it)) },
+                    valueRange = 0f..CardFontSize.entries.lastIndex.toFloat(),
+                    steps = CardFontSize.entries.size - 2,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(vertical = 4.dp),
+                )
+                Stepper(
+                    value = cardFontSize.ordinal + 1,
+                    range = 1..CardFontSize.entries.size,
+                    decreaseLabel = stringResource(R.string.font_size_decrease),
+                    increaseLabel = stringResource(R.string.font_size_increase),
+                    onChanged = { onCardFontSizeChange(cardFontSizeFor((it - 1).toFloat())) },
+                )
+            }
             Spacer(Modifier.height(8.dp))
 
             SheetSectionHeader(stringResource(R.string.grid_layout))
@@ -109,9 +121,11 @@ fun GridEditorSheet(
                     text = stringResource(R.string.columns),
                     style = MaterialTheme.typography.titleMedium,
                 )
-                ColumnStepper(
+                Stepper(
                     value = activeColumns,
                     range = BoardRepository.MIN_COLUMNS..BoardRepository.MAX_COLUMNS,
+                    decreaseLabel = stringResource(R.string.remove_columns),
+                    increaseLabel = stringResource(R.string.add_columns),
                     onChanged = { onAdjustColumns(it - activeColumns) },
                 )
             }
@@ -238,9 +252,11 @@ private fun GridProfileRow(
 }
 
 @Composable
-private fun ColumnStepper(
+private fun Stepper(
     value: Int,
     range: IntRange,
+    decreaseLabel: String,
+    increaseLabel: String,
     onChanged: (Int) -> Unit,
 ) {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -248,7 +264,7 @@ private fun ColumnStepper(
             onClick = { onChanged(value - 1) },
             enabled = value > range.first,
         ) {
-            Icon(Icons.Default.Remove, contentDescription = stringResource(R.string.remove_columns))
+            Icon(Icons.Default.Remove, contentDescription = decreaseLabel)
         }
         Text(
             text = value.toString(),
@@ -260,26 +276,15 @@ private fun ColumnStepper(
             onClick = { onChanged(value + 1) },
             enabled = value < range.last,
         ) {
-            Icon(Icons.Default.Add, contentDescription = stringResource(R.string.add_columns))
+            Icon(Icons.Default.Add, contentDescription = increaseLabel)
         }
     }
 }
 
-private fun sliderValueFor(size: CardFontSize): Float = when (size) {
-    CardFontSize.EXTRA_SMALL -> 0f
-    CardFontSize.SMALL -> 1f
-    CardFontSize.NORMAL -> 2f
-    CardFontSize.LARGE -> 3f
-    CardFontSize.EXTRA_LARGE -> 4f
-}
+private fun sliderValueFor(size: CardFontSize): Float = size.ordinal.toFloat()
 
-private fun cardFontSizeFor(value: Float): CardFontSize = when (value.roundToInt()) {
-    0 -> CardFontSize.EXTRA_SMALL
-    1 -> CardFontSize.SMALL
-    2 -> CardFontSize.NORMAL
-    3 -> CardFontSize.LARGE
-    else -> CardFontSize.EXTRA_LARGE
-}
+private fun cardFontSizeFor(value: Float): CardFontSize =
+    CardFontSize.entries[value.roundToInt().coerceIn(0, CardFontSize.entries.lastIndex)]
 
 private sealed interface GridEditorDialogState {
     data class Create(val baseColumns: Int) : GridEditorDialogState

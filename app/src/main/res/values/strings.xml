@@ -16,6 +16,8 @@
     <string name="remove_columns">Remove columns</string>
     <string name="done">Done</string>
     <string name="card_text_size">Card text size</string>
+    <string name="font_size_decrease">Decrease font size</string>
+    <string name="font_size_increase">Increase font size</string>
     <string name="add_custom_layout">Add custom layout</string>
     <string name="new_layout">New layout</string>
     <string name="edit_layout">Edit layout</string>
