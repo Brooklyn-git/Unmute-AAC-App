@@ -7,6 +7,7 @@ import android.media.AudioDeviceInfo
 import android.media.AudioFormat
 import android.media.AudioManager
 import android.media.AudioTrack
+import android.os.Build
 import android.os.Bundle
 import android.os.ParcelFileDescriptor
 import android.speech.tts.TextToSpeech
@@ -218,6 +219,10 @@ class TtsManager(
         }
 
     private suspend fun speakThroughTrack(engine: TextToSpeech, text: String, device: AudioDeviceInfo?): Boolean {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.R) {
+            Log.i(TAG, "Custom track playback needs API 30+, falling back to engine routing")
+            return false
+        }
         val pipe = ParcelFileDescriptor.createPipe()
         try {
             val result = engine.synthesizeToFile(text, Bundle(), pipe[1], UTTERANCE_ID)
