@@ -38,6 +38,7 @@ Unmute is designed to be a simple and intuitive application that turns a phone o
 - Adjust TTS speech **rate** and **pitch**, and test the sound from Settings.
 
 <img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/01-board.png width=180> <img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/02-editMode.png width=180> 
+
 <img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/03-editOrNewCard.png width=180> <img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/04-iconSearch.png width=180>
 
 ---
