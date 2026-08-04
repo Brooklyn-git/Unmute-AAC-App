@@ -49,6 +49,7 @@ data class BackupCard(
     val imageValue: String,
     val color: Long?,
     val orderIndex: Int,
+    val shortcutCategoryId: Long? = null,
 )
 
 @Serializable

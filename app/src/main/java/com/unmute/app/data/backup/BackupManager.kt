@@ -71,7 +71,7 @@ class BackupManager(
                     orderIndex = it.orderIndex,
                     isPreset = it.isPreset,
                     symbolType = it.symbolType.name,
-                    symbolValue = it.symbolValue,
+                    symbolValue = exportSymbolValue(it.symbolType, it.symbolValue),
                 )
             },
             cards = cards.map {
@@ -86,6 +86,7 @@ class BackupManager(
                     imageValue = exportImageValue(it),
                     color = it.color,
                     orderIndex = it.orderIndex,
+                    shortcutCategoryId = it.shortcutCategoryId,
                 )
             },
             gridProfiles = gridProfiles.map {
@@ -102,6 +103,16 @@ class BackupManager(
             cards.forEach { card ->
                 if (card.imageType == ImageType.PHOTO) {
                     val file = File(card.imageValue)
+                    if (file.isFile) {
+                        zip.putNextEntry(ZipEntry("$BACKUP_PHOTOS_DIR/${file.name}"))
+                        file.inputStream().use { it.copyTo(zip) }
+                        zip.closeEntry()
+                    }
+                }
+            }
+            categories.forEach { category ->
+                if (category.symbolType == ImageType.PHOTO) {
+                    val file = File(category.symbolValue)
                     if (file.isFile) {
                         zip.putNextEntry(ZipEntry("$BACKUP_PHOTOS_DIR/${file.name}"))
                         file.inputStream().use { it.copyTo(zip) }
@@ -164,6 +175,8 @@ class BackupManager(
         val categoryIds = backup.categories.map { it.id }.toSet()
         val unknownCategory = backup.cards.any { it.categoryId !in categoryIds }
         if (unknownCategory) throw IOException("Invalid backup: card references missing category")
+        val unknownShortcut = backup.cards.any { it.shortcutCategoryId != null && it.shortcutCategoryId !in categoryIds }
+        if (unknownShortcut) throw IOException("Invalid backup: shortcut references missing category")
     }
 
     private fun exportImageValue(card: CardEntity): String =
@@ -173,11 +186,25 @@ class BackupManager(
             card.imageValue
         }
 
+    private fun exportSymbolValue(type: ImageType, value: String): String =
+        if (type == ImageType.PHOTO) {
+            "$BACKUP_PHOTOS_DIR/${File(value).name}"
+        } else {
+            value
+        }
+
     private fun importImageValue(card: BackupCard, photoPathByEntry: Map<String, String>): String =
         if (card.imageType == ImageType.PHOTO.name) {
             photoPathByEntry[card.imageValue] ?: ""
         } else {
             card.imageValue
+        }
+
+    private fun importSymbolValue(category: BackupCategory, photoPathByEntry: Map<String, String>): String =
+        if (category.symbolType == ImageType.PHOTO.name) {
+            photoPathByEntry[category.symbolValue] ?: ""
+        } else {
+            category.symbolValue
         }
 
     private fun BackupFile.toEntities(
@@ -200,7 +227,7 @@ class BackupManager(
                 isPreset = it.isPreset,
                 symbolType = runCatching { ImageType.valueOf(it.symbolType) }
                     .getOrDefault(ImageType.EMOJI),
-                symbolValue = it.symbolValue,
+                symbolValue = importSymbolValue(it, photoPathByEntry),
             )
         },
         cards = cards.map {
@@ -215,6 +242,7 @@ class BackupManager(
                 imageValue = importImageValue(it, photoPathByEntry),
                 color = it.color,
                 orderIndex = it.orderIndex,
+                shortcutCategoryId = it.shortcutCategoryId,
             )
         },
         gridProfiles = gridProfiles.map {
