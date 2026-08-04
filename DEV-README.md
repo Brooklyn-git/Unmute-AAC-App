@@ -39,11 +39,16 @@ app/src/main/java/com/unmute/app/
 
 ### Data model
 
-- `Board (name, order)` → `Category (name_en/es, color, order, isPreset)` → `Card (label_en/es,
-  phrase_en/es, symbol | emoji | photo, color, order)`
+- `Board (name, order)` → `Category (name_en/es, color, symbol | emoji, order, isPreset)` →
+  `Card (label_en/es, phrase_en/es, symbol | emoji | photo, color, order)`
 - `GridProfile (name, columns, isPreset)` — "Big", "Small", plus user "Custom" profiles
 - `Settings` (DataStore): language, active grid profile, audio output, TTS engine/rate/pitch,
-  autospeak, speak-on-add, card font size, secure mode (tap count + reset window)
+  autospeak, speak-on-add, card font size, secure mode (tap count + reset window), section layout
+  (tabs or grid), speak-section-names
+- Sections carry a `symbolType` (`EMOJI` or `SYMBOL`) + `symbolValue`. Existing installs are
+  migrated by inheriting each section's first card icon (`MIGRATION_2_3`).
+- Sections can be navigated as **tabs** or a **grid** (`settings.sectionLayout`); with
+  "Speak section names" enabled, tapping a section speaks its name.
 - Default sections are marked `isPreset = true` and cannot be deleted.
 - The app currently operates on a **single board**; the `boards` table is schema-ready for future
   multi-board support.
@@ -56,7 +61,9 @@ app/src/main/java/com/unmute/app/
   - `photos/` — the card photo files (for `ImageType.PHOTO` cards).
 - Import validates the manifest (version + referential integrity) and applies everything in a single
   Room transaction via `BoardRepository.replaceAll()`; settings are restored afterwards.
-- Bump `BACKUP_VERSION` in `BackupManager` whenever the backup format changes.
+- New backup fields (category symbols, section layout, speak-section-names) are optional in the JSON
+  manifest with safe defaults, so backups from older app versions still import. Bump `BACKUP_VERSION`
+  in `BackupManager` for any *breaking* format change.
 
 ---
 
@@ -75,8 +82,8 @@ app/src/main/java/com/unmute/app/
 - Room schemas are exported to `app/schemas/` and committed; bump the database version and add a
   migration whenever the schema changes.
 
-Current unit tests (`app/src/test`): TTS `WavParser`, localization/fallback logic, and
-backup serialization round-trips.
+Current unit tests (`app/src/test`): TTS `WavParser`, localization/fallback logic, seed-data symbols,
+and backup serialization round-trips (including legacy-backup compatibility).
 
 ---
 

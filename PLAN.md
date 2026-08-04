@@ -44,17 +44,19 @@ own photos). Targets both children and adults, with configurable layouts.
 
 ## Data model
 
-- `Board (name, order)` → `Category (name_en/es, color, order)` → `Card (label_en/es, phrase_en/es, symbolPath | photoUri | emoji, color, order)`
+- `Board (name, order)` → `Category (name_en/es, color, symbol | emoji, order, isPreset)` → `Card (label_en/es, phrase_en/es, symbolPath | photoUri | emoji, color, order)`
 - `GridProfile (name, columns, isPreset)` — "Big", "Small", plus user "Custom" profiles
-- `Settings` (DataStore): language, active grid profile, audio output, TTS engine/rate/pitch, autospeak, card font size, secure mode (tap count + reset window)
+- `Settings` (DataStore): language, active grid profile, audio output, TTS engine/rate/pitch, autospeak, card font size, secure mode (tap count + reset window), section layout (tabs/grid), speak-section-names
 - First launch seeds a default board with core categories (Greetings, People, Food & Drink, Feelings, Actions, Places, Things, Body) using Mulberry symbols with EN + ES labels. The app currently uses a **single board** (the `boards` table is kept for future multi-board support).
+- Each section has a symbol (`EMOJI` or `SYMBOL`); existing installs are migrated by inheriting each
+  section's first card icon (`MIGRATION_2_3`).
 
 ## Screens / UX
 
-1. **Board screen** — sentence bar on top, category tabs, card grid. Tap card → appended to sentence (+ optional per-word speech); Speak / Clear / Backspace buttons.
-2. **Edit mode** — add/edit/delete/reorder cards & sections; pick a Mulberry symbol, emoji (with search), or own photo; edit bilingual labels; drag-to-reorder cards and category tabs. Gated by the lock button (see Secure mode).
+1. **Board screen** — sentence bar on top, category tabs **or** section grid, card grid. Tap card → appended to sentence (+ optional per-word speech); Speak / Clear / Backspace buttons.
+2. **Edit mode** — add/edit/delete/reorder cards & sections; pick a Mulberry symbol, emoji (with search), or own photo; edit bilingual labels; drag-to-reorder cards and category tabs; rename/recolor/re-symbol sections. Gated by the lock button (see Secure mode).
 3. **Grid editor** — switch between grid profiles, edit/delete Custom profiles, adjust the active profile's columns, and set card text size (5 levels via slider + stepper).
-4. **Settings** — language, secure mode, TTS engine/rate/pitch (+ test sound), audio output, autospeak, import/export backup.
+4. **Settings** — language, secure mode, TTS engine/rate/pitch (+ test sound), audio output, autospeak, section layout + speak-section-names, import/export backup.
 
 ### Secure mode
 
@@ -135,10 +137,12 @@ Language-aware (EN/ES).
 7. ✅ Secure mode (multi-tap lock with configurable tap count + reset window)
 8. ✅ Settings + accessibility polish (immediate language switch, autospeak, speak-on-add)
 9. ✅ Backup/restore: import/export `.unmute` (manifest + photos + settings)
-10. ✅ Unit tests (TTS WavParser, Localization, Backup serialization) + final `assembleDebug`
-11. ⏳ Text mode + word prediction (offline, language-aware) — deferred
-12. ⏳ Multi-board support (schema ready, single board used today)
-13. ✅ About screen (version, privacy, contact email, source code, license, Mulberry attribution)
+10. ✅ Unit tests (TTS WavParser, Localization, Backup serialization, seed symbols) + final `assembleDebug`
+11. ✅ Accessible section navigation: section symbols (migration 2→3), tabs **and** grid layouts,
+    speak-section-names, TalkBack-friendly large buttons, symbol picker + section editing
+12. ⏳ Text mode + word prediction (offline, language-aware) — deferred
+13. ⏳ Multi-board support (schema ready, single board used today)
+14. ✅ About screen (version, privacy, contact email, source code, license, Mulberry attribution)
 
 ## Known risks / notes
 

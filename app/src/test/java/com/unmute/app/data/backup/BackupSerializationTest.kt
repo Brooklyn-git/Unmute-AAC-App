@@ -23,6 +23,8 @@ class BackupSerializationTest {
                 color = 0xFF000000L,
                 orderIndex = 0,
                 isPreset = true,
+                symbolType = ImageType.EMOJI.name,
+                symbolValue = "🍎",
             ),
         ),
         cards = listOf(
@@ -55,6 +57,8 @@ class BackupSerializationTest {
             secureMode = true,
             secureTapCount = 3,
             secureResetSeconds = 2,
+            sectionLayout = "GRID",
+            speakSectionNames = true,
         ),
     )
 
@@ -63,5 +67,34 @@ class BackupSerializationTest {
         val encoded = json.encodeToString(BackupFile.serializer(), sampleBackup)
         val decoded = json.decodeFromString(BackupFile.serializer(), encoded)
         assertEquals(sampleBackup, decoded)
+    }
+
+    @Test
+    fun `backup without new fields parses with defaults`() {
+        val legacy = """
+            {
+              "version": 1,
+              "board": {"id": 1, "nameEn": "Unmute", "nameEs": "Unmute"},
+              "categories": [
+                {
+                  "id": 1, "boardId": 1, "nameEn": "Food", "nameEs": "Comida",
+                  "color": 4294901760, "orderIndex": 0, "isPreset": true
+                }
+              ],
+              "cards": [],
+              "gridProfiles": [],
+              "settings": {
+                "language": "EN", "activeGridProfileId": 1, "audioOutput": "auto",
+                "ttsEngine": null, "autospeak": false, "speakOnAdd": true,
+                "speechRate": 1.0, "speechPitch": 1.0, "cardFontSize": "NORMAL",
+                "secureMode": false, "secureTapCount": 3, "secureResetSeconds": 2
+              }
+            }
+        """.trimIndent()
+        val decoded = json.decodeFromString(BackupFile.serializer(), legacy)
+        assertEquals("EMOJI", decoded.categories[0].symbolType)
+        assertEquals("", decoded.categories[0].symbolValue)
+        assertEquals("TABS", decoded.settings.sectionLayout)
+        assertEquals(false, decoded.settings.speakSectionNames)
     }
 }
