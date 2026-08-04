@@ -71,6 +71,9 @@
     <string name="choose_from_gallery">Choose from gallery</string>
     <string name="label_en">Label</string>
     <string name="label_es">Label</string>
+    <string name="link_to_section">Link to section</string>
+    <string name="no_section_link">No link</string>
+    <string name="shortcut_section_hint">This card opens the selected section when tapped.</string>
     <string name="phrase_en">Phrase</string>
     <string name="phrase_es">Phrase</string>
     <string name="color">Color</string>

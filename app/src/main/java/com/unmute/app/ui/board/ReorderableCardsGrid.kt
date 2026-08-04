@@ -48,6 +48,7 @@ private const val EDGE_SCROLL_STEP_DP = 8
 @Composable
 fun ReorderableCardsGrid(
     cards: List<CardEntity>,
+    categories: List<CategoryEntity>,
     selectedCategory: CategoryEntity?,
     columns: Int,
     editMode: Boolean,
@@ -164,6 +165,7 @@ fun ReorderableCardsGrid(
                         card = card,
                         label = card.label(language),
                         accentColor = accentColor,
+                        language = language,
                         labelFontSize = when (cardFontSize) {
                             CardFontSize.EXTRA_SMALL -> 12.sp
                             CardFontSize.SMALL -> 14.sp
@@ -171,6 +173,8 @@ fun ReorderableCardsGrid(
                             CardFontSize.LARGE -> 20.sp
                             CardFontSize.EXTRA_LARGE -> 24.sp
                         },
+                        shortcutCategory = card.shortcutCategoryId
+                            ?.let { id -> categories.firstOrNull { it.id == id } },
                         onClick = { if (editMode) onEditCard(card) else onCardClick(card) },
                     )
                     if (editMode) {

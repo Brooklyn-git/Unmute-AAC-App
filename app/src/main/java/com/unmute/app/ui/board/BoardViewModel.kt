@@ -83,6 +83,16 @@ class BoardViewModel(
         }
     }
 
+    /** Navigates to a section from a shortcut card, always speaking the section name. */
+    fun navigateToSection(id: Long) {
+        _selectedCategoryId.value = id
+        val name = categories.value
+            .firstOrNull { it.id == id }
+            ?.let { categoryName(it) }
+            ?: return
+        speak(name)
+    }
+
     fun selectGridProfile(id: Long) {
         viewModelScope.launch { settingsRepository.setActiveGridProfile(id) }
     }

@@ -39,6 +39,7 @@ class BackupSerializationTest {
                 imageValue = "photos/photo_1.jpg",
                 color = null,
                 orderIndex = 0,
+                shortcutCategoryId = 1,
             ),
         ),
         gridProfiles = listOf(
@@ -81,7 +82,14 @@ class BackupSerializationTest {
                   "color": 4294901760, "orderIndex": 0, "isPreset": true
                 }
               ],
-              "cards": [],
+              "cards": [
+                {
+                  "id": 1, "categoryId": 1, "labelEn": "Hungry", "labelEs": "Hambre",
+                  "phraseEn": "I am hungry", "phraseEs": "Tengo hambre",
+                  "imageType": "PHOTO", "imageValue": "photos/photo_1.jpg",
+                  "color": null, "orderIndex": 0
+                }
+              ],
               "gridProfiles": [],
               "settings": {
                 "language": "EN", "activeGridProfileId": 1, "audioOutput": "auto",
@@ -96,5 +104,6 @@ class BackupSerializationTest {
         assertEquals("", decoded.categories[0].symbolValue)
         assertEquals("TABS", decoded.settings.sectionLayout)
         assertEquals(false, decoded.settings.speakSectionNames)
+        assertEquals(null, decoded.cards[0].shortcutCategoryId)
     }
 }

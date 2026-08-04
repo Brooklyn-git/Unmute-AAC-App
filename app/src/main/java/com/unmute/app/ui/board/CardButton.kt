@@ -2,6 +2,7 @@ package com.unmute.app.ui.board
 
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.layout.Arrangement
+import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.aspectRatio
@@ -13,6 +14,7 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Add
+import androidx.compose.material.icons.filled.OpenInNew
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -30,14 +32,18 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import com.unmute.app.R
 import com.unmute.app.data.local.CardEntity
+import com.unmute.app.data.local.CategoryEntity
+import com.unmute.app.domain.model.label
 
 @Composable
 fun CardButton(
     card: CardEntity,
     label: String,
     accentColor: Color,
+    language: String,
     onClick: () -> Unit,
     labelFontSize: TextUnit = 16.sp,
+    shortcutCategory: CategoryEntity? = null,
     modifier: Modifier = Modifier,
 ) {
     Surface(
@@ -55,15 +61,33 @@ fun CardButton(
             horizontalAlignment = Alignment.CenterHorizontally,
             verticalArrangement = Arrangement.Center,
         ) {
-            CardImage(
-                card = card,
-                modifier = Modifier
-                    .weight(1f)
-                    .fillMaxWidth(),
-            )
+            if (shortcutCategory != null) {
+                Box(
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                ) {
+                    SectionImage(category = shortcutCategory)
+                    Icon(
+                        Icons.Default.OpenInNew,
+                        contentDescription = null,
+                        tint = accentColor,
+                        modifier = Modifier
+                            .align(Alignment.TopEnd)
+                            .size(18.dp),
+                    )
+                }
+            } else {
+                CardImage(
+                    card = card,
+                    modifier = Modifier
+                        .weight(1f)
+                        .fillMaxWidth(),
+                )
+            }
             Spacer(Modifier.height(4.dp))
             Text(
-                text = label,
+                text = if (shortcutCategory != null) shortcutCategory.label(language) else label,
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.SemiBold,
                 fontSize = labelFontSize,

@@ -112,6 +112,17 @@ fun BoardScreen(
         }
     }
     val unlocked = !settings.secureMode || editMode
+    val handleCardClick: (CardEntity) -> Unit = { card ->
+        val targetId = card.shortcutCategoryId
+        if (targetId != null) {
+            viewModel.navigateToSection(targetId)
+            if (settings.sectionLayout == SectionLayout.GRID) {
+                showSections = false
+            }
+        } else {
+            onCardClick(card)
+        }
+    }
     val onLockClick = {
         if (settings.secureMode && !editMode) {
             showSecureHint = true
@@ -226,12 +237,13 @@ fun BoardScreen(
                     } else {
                         ReorderableCardsGrid(
                             cards = cards,
+                            categories = categories,
                             selectedCategory = selectedCategory,
                             columns = columns,
                             editMode = editMode,
                             language = language,
                             cardFontSize = settings.cardFontSize,
-                            onCardClick = onCardClick,
+                            onCardClick = handleCardClick,
                             onEditCard = { editingCard = it },
                             onDeleteCard = viewModel::deleteCard,
                             onAddCard = if (editMode && effectiveCategoryId != null) {
@@ -286,12 +298,13 @@ fun BoardScreen(
                         } else {
                             ReorderableCardsGrid(
                                 cards = cards,
+                                categories = categories,
                                 selectedCategory = selectedCategory,
                                 columns = columns,
                                 editMode = editMode,
                                 language = language,
                                 cardFontSize = settings.cardFontSize,
-                                onCardClick = onCardClick,
+                                onCardClick = handleCardClick,
                                 onEditCard = { editingCard = it },
                                 onDeleteCard = viewModel::deleteCard,
                                 onAddCard = if (editMode && effectiveCategoryId != null) {
@@ -324,6 +337,7 @@ fun BoardScreen(
         CardEditDialog(
             card = card,
             language = language,
+            categories = categories,
             isNew = false,
             onSave = {
                 viewModel.saveCard(it)
@@ -348,6 +362,7 @@ fun BoardScreen(
                 orderIndex = 0,
             ),
             language = language,
+            categories = categories,
             isNew = true,
             onSave = {
                 viewModel.saveCard(it)

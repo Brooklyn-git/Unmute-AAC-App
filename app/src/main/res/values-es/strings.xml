@@ -71,6 +71,9 @@
     <string name="choose_from_gallery">Elegir de la galería</string>
     <string name="label_en">Etiqueta</string>
     <string name="label_es">Etiqueta</string>
+    <string name="link_to_section">Vincular a sección</string>
+    <string name="no_section_link">Sin enlace</string>
+    <string name="shortcut_section_hint">Esta tarjeta abre la sección seleccionada al tocarla.</string>
     <string name="phrase_en">Frase</string>
     <string name="phrase_es">Frase</string>
     <string name="color">Color</string>
