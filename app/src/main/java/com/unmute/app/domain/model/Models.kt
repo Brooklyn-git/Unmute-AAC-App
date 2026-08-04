@@ -24,3 +24,8 @@ enum class CardFontSize {
     LARGE,
     EXTRA_LARGE,
 }
+
+enum class SectionLayout {
+    TABS,
+    GRID,
+}

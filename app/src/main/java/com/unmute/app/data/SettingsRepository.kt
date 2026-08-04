@@ -11,6 +11,7 @@ import androidx.datastore.preferences.preferencesDataStore
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
 import com.unmute.app.domain.model.CardFontSize
+import com.unmute.app.domain.model.SectionLayout
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
 
@@ -29,6 +30,8 @@ data class AppSettings(
     val secureMode: Boolean = false,
     val secureTapCount: Int = SettingsRepository.DEFAULT_SECURE_TAPS,
     val secureResetSeconds: Int = SettingsRepository.DEFAULT_SECURE_RESET_SECONDS,
+    val sectionLayout: SectionLayout = SectionLayout.TABS,
+    val speakSectionNames: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -52,6 +55,10 @@ class SettingsRepository(private val context: Context) {
                 .coerceIn(MIN_SECURE_TAPS, MAX_SECURE_TAPS),
             secureResetSeconds = (prefs[KEY_SECURE_RESET_SECONDS] ?: DEFAULT_SECURE_RESET_SECONDS)
                 .coerceIn(MIN_SECURE_RESET_SECONDS, MAX_SECURE_RESET_SECONDS),
+            sectionLayout = prefs[KEY_SECTION_LAYOUT]
+                ?.let { runCatching { SectionLayout.valueOf(it) }.getOrNull() }
+                ?: SectionLayout.TABS,
+            speakSectionNames = prefs[KEY_SPEAK_SECTION_NAMES] ?: false,
         )
     }
 
@@ -111,6 +118,14 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SECURE_RESET_SECONDS] = value }
     }
 
+    suspend fun setSectionLayout(layout: SectionLayout) {
+        context.dataStore.edit { it[KEY_SECTION_LAYOUT] = layout.name }
+    }
+
+    suspend fun setSpeakSectionNames(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_SPEAK_SECTION_NAMES] = enabled }
+    }
+
     /** Overwrites every stored setting with [appSettings]. */
     suspend fun restore(appSettings: AppSettings) {
         context.dataStore.edit { prefs ->
@@ -130,6 +145,8 @@ class SettingsRepository(private val context: Context) {
             prefs[KEY_SECURE_MODE] = appSettings.secureMode
             prefs[KEY_SECURE_TAP_COUNT] = appSettings.secureTapCount
             prefs[KEY_SECURE_RESET_SECONDS] = appSettings.secureResetSeconds
+            prefs[KEY_SECTION_LAYOUT] = appSettings.sectionLayout.name
+            prefs[KEY_SPEAK_SECTION_NAMES] = appSettings.speakSectionNames
         }
     }
 
@@ -146,6 +163,8 @@ class SettingsRepository(private val context: Context) {
         val KEY_SECURE_MODE = booleanPreferencesKey("secure_mode")
         val KEY_SECURE_TAP_COUNT = intPreferencesKey("secure_tap_count")
         val KEY_SECURE_RESET_SECONDS = intPreferencesKey("secure_reset_seconds")
+        val KEY_SECTION_LAYOUT = stringPreferencesKey("section_layout")
+        val KEY_SPEAK_SECTION_NAMES = booleanPreferencesKey("speak_section_names")
 
         const val DEFAULT_SECURE_TAPS = 3
         const val MIN_SECURE_TAPS = 1
