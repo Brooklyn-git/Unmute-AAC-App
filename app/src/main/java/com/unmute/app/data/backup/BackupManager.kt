@@ -14,6 +14,7 @@ import com.unmute.app.data.local.UnmuteDatabase
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.SectionLayout
 import java.io.File
 import java.io.IOException
 import java.io.InputStream
@@ -69,6 +70,8 @@ class BackupManager(
                     color = it.color,
                     orderIndex = it.orderIndex,
                     isPreset = it.isPreset,
+                    symbolType = it.symbolType.name,
+                    symbolValue = it.symbolValue,
                 )
             },
             cards = cards.map {
@@ -195,6 +198,9 @@ class BackupManager(
                 color = it.color,
                 orderIndex = it.orderIndex,
                 isPreset = it.isPreset,
+                symbolType = runCatching { ImageType.valueOf(it.symbolType) }
+                    .getOrDefault(ImageType.EMOJI),
+                symbolValue = it.symbolValue,
             )
         },
         cards = cards.map {
@@ -236,6 +242,8 @@ class BackupManager(
         secureMode = secureMode,
         secureTapCount = secureTapCount,
         secureResetSeconds = secureResetSeconds,
+        sectionLayout = sectionLayout.name,
+        speakSectionNames = speakSectionNames,
     )
 
     private fun BackupSettings.toAppSettings() = AppSettings(
@@ -257,5 +265,8 @@ class BackupManager(
             SettingsRepository.MIN_SECURE_RESET_SECONDS,
             SettingsRepository.MAX_SECURE_RESET_SECONDS,
         ),
+        sectionLayout = runCatching { SectionLayout.valueOf(sectionLayout) }
+            .getOrDefault(SectionLayout.TABS),
+        speakSectionNames = speakSectionNames,
     )
 }

@@ -33,6 +33,8 @@ data class BackupCategory(
     val color: Long,
     val orderIndex: Int,
     val isPreset: Boolean,
+    val symbolType: String = "EMOJI",
+    val symbolValue: String = "",
 )
 
 @Serializable
@@ -71,4 +73,6 @@ data class BackupSettings(
     val secureMode: Boolean,
     val secureTapCount: Int,
     val secureResetSeconds: Int,
+    val sectionLayout: String = "TABS",
+    val speakSectionNames: Boolean = false,
 )
