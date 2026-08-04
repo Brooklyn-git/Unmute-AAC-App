@@ -61,6 +61,7 @@ import com.unmute.app.R
 import com.unmute.app.data.SettingsRepository
 import com.unmute.app.domain.model.AppLanguage
 import com.unmute.app.domain.model.AudioOutputIds
+import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.ui.components.Stepper
 import java.text.SimpleDateFormat
@@ -164,6 +165,27 @@ fun SettingsScreen(
                     selected = settings.language == AppLanguage.ES,
                     onClick = { viewModel.setLanguage(AppLanguage.ES) },
                 )
+            }
+
+            item { SectionHeader(stringResource(R.string.sections)) }
+            item {
+                Column {
+                    LanguageRow(
+                        label = stringResource(R.string.section_layout_tabs),
+                        selected = settings.sectionLayout == SectionLayout.TABS,
+                        onClick = { viewModel.setSectionLayout(SectionLayout.TABS) },
+                    )
+                    LanguageRow(
+                        label = stringResource(R.string.section_layout_grid),
+                        selected = settings.sectionLayout == SectionLayout.GRID,
+                        onClick = { viewModel.setSectionLayout(SectionLayout.GRID) },
+                    )
+                    ToggleRow(
+                        label = stringResource(R.string.speak_section_names),
+                        checked = settings.speakSectionNames,
+                        onCheckedChange = viewModel::setSpeakSectionNames,
+                    )
+                }
             }
 
             item { SectionHeader(stringResource(R.string.secure_mode)) }

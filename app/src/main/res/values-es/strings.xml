@@ -10,6 +10,12 @@
     <string name="language_english">Inglés</string>
     <string name="language_spanish">Español</string>
 
+    <string name="sections">Secciones</string>
+    <string name="section_layout">Disposición de secciones</string>
+    <string name="section_layout_tabs">Pestañas</string>
+    <string name="section_layout_grid">Cuadrícula</string>
+    <string name="speak_section_names">Hablar nombres de secciones</string>
+
     <string name="secure_mode">Modo seguro</string>
     <string name="secure_mode_toggle">Modo seguro</string>
     <string name="secure_mode_dialog_message">Cuando actives el &quot;Modo seguro&quot; ocultarás y bloquearás los ajustes. Para desbloquearlos debes pulsar el candado tres veces.</string>
@@ -54,7 +60,10 @@
     <string name="add_card">Añadir tarjeta</string>
     <string name="add_section">Añadir sección</string>
     <string name="new_section">Nueva sección</string>
+    <string name="edit_section">Editar sección</string>
     <string name="section_name">Nombre de la sección</string>
+    <string name="section_symbol">Símbolo de la sección</string>
+    <string name="back_to_sections">Volver a las secciones</string>
     <string name="change_photo">Cambiar foto</string>
     <string name="search_icons">Buscar iconos</string>
     <string name="no_matching_icons">Ningún icono coincide con tu búsqueda</string>

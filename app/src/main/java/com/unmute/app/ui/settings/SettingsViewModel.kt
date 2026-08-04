@@ -8,6 +8,7 @@ import com.unmute.app.data.AppSettings
 import com.unmute.app.data.SettingsRepository
 import com.unmute.app.data.backup.BackupManager
 import com.unmute.app.domain.model.AppLanguage
+import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
@@ -72,6 +73,14 @@ class SettingsViewModel(
 
     fun setAutospeak(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setAutospeak(enabled) }
+    }
+
+    fun setSectionLayout(layout: SectionLayout) {
+        viewModelScope.launch { settingsRepository.setSectionLayout(layout) }
+    }
+
+    fun setSpeakSectionNames(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSpeakSectionNames(enabled) }
     }
 
     fun setSecureMode(enabled: Boolean) {

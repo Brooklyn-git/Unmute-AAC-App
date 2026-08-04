@@ -11,6 +11,7 @@ import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
@@ -71,7 +72,15 @@ class BoardViewModel(
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_COLUMNS)
 
     fun selectCategory(id: Long) {
+        val previous = _selectedCategoryId.value
         _selectedCategoryId.value = id
+        if (settings.value.speakSectionNames && previous != id) {
+            val name = categories.value
+                .firstOrNull { it.id == id }
+                ?.let { categoryName(it) }
+                ?: return
+            speak(name)
+        }
     }
 
     fun selectGridProfile(id: Long) {
@@ -109,6 +118,14 @@ class BoardViewModel(
 
     fun setCardFontSize(size: CardFontSize) {
         viewModelScope.launch { settingsRepository.setCardFontSize(size) }
+    }
+
+    fun setSectionLayout(layout: SectionLayout) {
+        viewModelScope.launch { settingsRepository.setSectionLayout(layout) }
+    }
+
+    fun setSpeakSectionNames(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setSpeakSectionNames(enabled) }
     }
 
     /** Adds [delta] columns to the active grid profile, creating a custom copy if it is a preset. */
@@ -225,7 +242,12 @@ class BoardViewModel(
         }
     }
 
-    fun addCategory(name: String, color: Long) {
+    fun addCategory(
+        name: String,
+        color: Long,
+        symbolType: ImageType = ImageType.EMOJI,
+        symbolValue: String = "",
+    ) {
         viewModelScope.launch {
             val boardId = board.value?.id ?: return@launch
             val id = boardRepository.insertCategory(
@@ -234,8 +256,25 @@ class BoardViewModel(
                 nameEs = name,
                 color = color,
                 orderIndex = categories.value.size,
+                symbolType = symbolType,
+                symbolValue = symbolValue,
             )
             _selectedCategoryId.value = id
+        }
+    }
+
+    fun updateCategory(
+        category: CategoryEntity,
+        name: String,
+        color: Long,
+        symbolType: ImageType = ImageType.EMOJI,
+        symbolValue: String = "",
+    ) {
+        viewModelScope.launch {
+            boardRepository.updateCategory(
+                category.copy(nameEn = name, nameEs = name, color = color,
+                    symbolType = symbolType, symbolValue = symbolValue),
+            )
         }
     }
 
@@ -252,6 +291,9 @@ class BoardViewModel(
 
     private fun cardPhrase(card: CardEntity): String =
         if (language.value == "es") card.phraseEs else card.phraseEn
+
+    private fun categoryName(category: CategoryEntity): String =
+        if (language.value == "es") category.nameEs else category.nameEn
 
     private fun speak(text: String) {
         val s = settings.value

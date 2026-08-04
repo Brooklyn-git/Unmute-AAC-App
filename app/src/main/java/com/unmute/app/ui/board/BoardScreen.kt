@@ -9,6 +9,7 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.filled.ArrowBack
 import androidx.compose.material.icons.filled.Backspace
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.GridView
@@ -49,6 +50,7 @@ import com.unmute.app.data.local.CardEntity
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.label
 import com.unmute.app.tts.TtsIssue
 import kotlinx.coroutines.delay
@@ -82,11 +84,13 @@ fun BoardScreen(
     var editingCard by remember { mutableStateOf<CardEntity?>(null) }
     var addingCard by remember { mutableStateOf(false) }
     var addingSection by remember { mutableStateOf(false) }
+    var editingSection by remember { mutableStateOf<CategoryEntity?>(null) }
     var showGridEditor by remember { mutableStateOf(false) }
 
     var secureUnlocked by rememberSaveable { mutableStateOf(false) }
     var lockPressCount by rememberSaveable { mutableStateOf(0) }
     var showSecureHint by remember { mutableStateOf(false) }
+    var showSections by rememberSaveable { mutableStateOf(true) }
     LaunchedEffect(settings.secureMode) {
         if (settings.secureMode) {
             secureUnlocked = false
@@ -203,37 +207,103 @@ fun BoardScreen(
                 onClear = viewModel::clearSentence,
                 onRemoveLast = viewModel::removeLastWord,
             )
-            ReorderableCategoryTabs(
-                categories = categories,
-                selectedCategoryId = effectiveCategoryId,
-                language = language,
-                onSelect = viewModel::selectCategory,
-                onReorder = viewModel::reorderCategories,
-                onDeleteCategory = viewModel::deleteCategory,
-                editable = editMode,
-                onAddSection = { addingSection = true },
-            )
-            if (cards.isEmpty() && !editMode) {
-                EmptyState()
-            } else {
-                ReorderableCardsGrid(
-                    cards = cards,
-                    selectedCategory = selectedCategory,
-                    columns = columns,
-                    editMode = editMode,
-                    language = language,
-                    cardFontSize = settings.cardFontSize,
-                    onCardClick = onCardClick,
-                    onEditCard = { editingCard = it },
-                    onDeleteCard = viewModel::deleteCard,
-                    onAddCard = if (editMode && effectiveCategoryId != null) {
-                        { addingCard = true }
+            when (settings.sectionLayout) {
+                SectionLayout.TABS -> {
+                    ReorderableCategoryTabs(
+                        categories = categories,
+                        selectedCategoryId = effectiveCategoryId,
+                        language = language,
+                        onSelect = viewModel::selectCategory,
+                        onReorder = viewModel::reorderCategories,
+                        onDeleteCategory = viewModel::deleteCategory,
+                        onEditCategory = { editingSection = it },
+                        editable = editMode,
+                        onAddSection = { addingSection = true },
+                    )
+                    if (cards.isEmpty() && !editMode) {
+                        EmptyState()
                     } else {
-                        null
-                    },
-                    onReorder = viewModel::reorderCards,
-                    modifier = Modifier.weight(1f),
-                )
+                        ReorderableCardsGrid(
+                            cards = cards,
+                            selectedCategory = selectedCategory,
+                            columns = columns,
+                            editMode = editMode,
+                            language = language,
+                            cardFontSize = settings.cardFontSize,
+                            onCardClick = onCardClick,
+                            onEditCard = { editingCard = it },
+                            onDeleteCard = viewModel::deleteCard,
+                            onAddCard = if (editMode && effectiveCategoryId != null) {
+                                { addingCard = true }
+                            } else {
+                                null
+                            },
+                            onReorder = viewModel::reorderCards,
+                            modifier = Modifier.weight(1f),
+                        )
+                    }
+                }
+
+                SectionLayout.GRID -> {
+                    if (showSections || categories.isEmpty()) {
+                        SectionGrid(
+                            categories = categories,
+                            selectedCategoryId = effectiveCategoryId,
+                            language = language,
+                            editable = editMode,
+                            onSelect = { id ->
+                                viewModel.selectCategory(id)
+                                showSections = false
+                            },
+                            onDeleteCategory = viewModel::deleteCategory,
+                            onEditCategory = { editingSection = it },
+                            onAddSection = { addingSection = true },
+                            modifier = Modifier.weight(1f),
+                        )
+                    } else {
+                        Row(
+                            verticalAlignment = Alignment.CenterVertically,
+                            modifier = Modifier
+                                .fillMaxWidth()
+                                .padding(horizontal = 4.dp),
+                        ) {
+                            IconButton(onClick = { showSections = true }) {
+                                Icon(
+                                    Icons.Default.ArrowBack,
+                                    contentDescription = stringResource(R.string.back_to_sections),
+                                )
+                            }
+                            Text(
+                                text = selectedCategory?.label(language) ?: "",
+                                style = MaterialTheme.typography.titleLarge,
+                                fontWeight = FontWeight.Bold,
+                                maxLines = 1,
+                            )
+                        }
+                        if (cards.isEmpty() && !editMode) {
+                            EmptyState()
+                        } else {
+                            ReorderableCardsGrid(
+                                cards = cards,
+                                selectedCategory = selectedCategory,
+                                columns = columns,
+                                editMode = editMode,
+                                language = language,
+                                cardFontSize = settings.cardFontSize,
+                                onCardClick = onCardClick,
+                                onEditCard = { editingCard = it },
+                                onDeleteCard = viewModel::deleteCard,
+                                onAddCard = if (editMode && effectiveCategoryId != null) {
+                                    { addingCard = true }
+                                } else {
+                                    null
+                                },
+                                onReorder = viewModel::reorderCards,
+                                modifier = Modifier.weight(1f),
+                            )
+                        }
+                    }
+                }
             }
             secureTapHint?.let { hint ->
                 Text(
@@ -288,11 +358,22 @@ fun BoardScreen(
 
     if (addingSection) {
         SectionEditDialog(
-            onSave = { name, color ->
-                viewModel.addCategory(name, color)
+            onSave = { name, color, symbolType, symbolValue ->
+                viewModel.addCategory(name, color, symbolType, symbolValue)
                 addingSection = false
             },
             onDismiss = { addingSection = false },
+        )
+    }
+
+    editingSection?.let { category ->
+        SectionEditDialog(
+            onSave = { name, color, symbolType, symbolValue ->
+                viewModel.updateCategory(category, name, color, symbolType, symbolValue)
+                editingSection = null
+            },
+            onDismiss = { editingSection = null },
+            initialCategory = category,
         )
     }
 

@@ -16,6 +16,7 @@ import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.Close
+import androidx.compose.material.icons.filled.Edit
 import androidx.compose.material3.Icon
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.Surface
@@ -52,6 +53,7 @@ fun ReorderableCategoryTabs(
     onSelect: (Long) -> Unit,
     onReorder: (List<CategoryEntity>) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
+    onEditCategory: (CategoryEntity) -> Unit,
     editable: Boolean,
     onAddSection: () -> Unit,
     modifier: Modifier = Modifier,
@@ -136,26 +138,44 @@ fun ReorderableCategoryTabs(
                     ),
                 ) {
                     CategoryChip(
-                        name = category.label(language),
+                        category = category,
                         color = Color(category.color),
                         selected = selected,
+                        language = language,
                         onClick = { onSelect(category.id) },
                     )
-                    if (editable && !category.isPreset) {
+                    if (editable) {
                         Surface(
-                            onClick = { onDeleteCategory(category) },
+                            onClick = { onEditCategory(category) },
                             shape = CircleShape,
-                            color = MaterialTheme.colorScheme.errorContainer,
+                            color = MaterialTheme.colorScheme.primaryContainer,
                             modifier = Modifier
-                                .align(Alignment.TopEnd)
+                                .align(Alignment.TopStart)
                                 .size(28.dp),
                         ) {
                             Icon(
-                                Icons.Default.Close,
-                                contentDescription = stringResource(R.string.delete),
-                                tint = MaterialTheme.colorScheme.onErrorContainer,
+                                Icons.Default.Edit,
+                                contentDescription = stringResource(R.string.edit_section),
+                                tint = MaterialTheme.colorScheme.onPrimaryContainer,
                                 modifier = Modifier.padding(4.dp),
                             )
+                        }
+                        if (!category.isPreset) {
+                            Surface(
+                                onClick = { onDeleteCategory(category) },
+                                shape = CircleShape,
+                                color = MaterialTheme.colorScheme.errorContainer,
+                                modifier = Modifier
+                                    .align(Alignment.TopEnd)
+                                    .size(28.dp),
+                            ) {
+                                Icon(
+                                    Icons.Default.Close,
+                                    contentDescription = stringResource(R.string.delete),
+                                    tint = MaterialTheme.colorScheme.onErrorContainer,
+                                    modifier = Modifier.padding(4.dp),
+                                )
+                            }
                         }
                     }
                 }
@@ -199,9 +219,10 @@ private fun AddSectionChip(onClick: () -> Unit) {
 
 @Composable
 private fun CategoryChip(
-    name: String,
+    category: CategoryEntity,
     color: Color,
     selected: Boolean,
+    language: String,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -210,12 +231,23 @@ private fun CategoryChip(
         color = if (selected) color else color.copy(alpha = 0.15f),
         contentColor = if (selected) Color.White else color,
     ) {
-        Text(
-            text = name,
-            style = MaterialTheme.typography.titleMedium,
-            fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-            modifier = Modifier.padding(horizontal = 20.dp, vertical = 12.dp),
-        )
+        Row(
+            verticalAlignment = Alignment.CenterVertically,
+            modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+        ) {
+            if (category.symbolValue.isNotBlank()) {
+                SectionImage(
+                    category = category,
+                    modifier = Modifier.size(24.dp),
+                )
+            }
+            Text(
+                text = category.label(language),
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                modifier = Modifier.padding(start = if (category.symbolValue.isNotBlank()) 6.dp else 0.dp),
+            )
+        }
     }
 }
 

@@ -10,6 +10,12 @@
     <string name="language_english">English</string>
     <string name="language_spanish">Spanish</string>
 
+    <string name="sections">Sections</string>
+    <string name="section_layout">Section layout</string>
+    <string name="section_layout_tabs">Tabs</string>
+    <string name="section_layout_grid">Grid</string>
+    <string name="speak_section_names">Speak section names</string>
+
     <string name="secure_mode">Secure mode</string>
     <string name="secure_mode_toggle">Secure Mode</string>
     <string name="secure_mode_dialog_message">When you turn on &quot;Secure Mode&quot; you hide and lock settings. To unlock them you must press the lock three times.</string>
@@ -54,7 +60,10 @@
     <string name="add_card">Add card</string>
     <string name="add_section">Add section</string>
     <string name="new_section">New section</string>
+    <string name="edit_section">Edit section</string>
     <string name="section_name">Section name</string>
+    <string name="section_symbol">Section symbol</string>
+    <string name="back_to_sections">Back to sections</string>
     <string name="change_photo">Change photo</string>
     <string name="search_icons">Search icons</string>
     <string name="no_matching_icons">No icons match your search</string>
