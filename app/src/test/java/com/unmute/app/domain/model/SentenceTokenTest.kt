@@ -105,6 +105,53 @@ class SentenceTokenTest {
     }
 
     @Test
+    fun `dropTargetIndex moves a card into a gap between words`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(1, dropTargetIndex(from = 0, dropX = 200f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex moves a card to the front`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(0, dropTargetIndex(from = 2, dropX = 10f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex moves a card to the end`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(2, dropTargetIndex(from = 0, dropX = 500f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex returns null when dropped back at its own slot`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(null, dropTargetIndex(from = 0, dropX = 50f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex ignores the dragged card's own center`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(2, dropTargetIndex(from = 1, dropX = 230f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex returns null for an out of range source`() {
+        val centers = listOf(50f, 150f, 250f)
+        assertEquals(null, dropTargetIndex(from = 5, dropX = 200f, centerXs = centers))
+    }
+
+    @Test
+    fun `dropTargetIndex combined with moved inserts a card between words`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I am hungry", "Hungry", ImageType.EMOJI, "😋", null),
+            SentenceToken.Text("please"),
+            SentenceToken.Text("water"),
+        )
+        val target = dropTargetIndex(from = 0, dropX = 200f, centerXs = listOf(50f, 150f, 250f))!!
+        assertEquals(listOf("please", "I am hungry", "water"), tokens.moved(0, target).map { it.text })
+    }
+
+    @Test
     fun `withTextAt replaces the typed text at the given index`() {
         val tokens = listOf(
             SentenceToken.Text("please"),

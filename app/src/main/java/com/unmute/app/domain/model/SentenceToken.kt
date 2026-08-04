@@ -58,6 +58,19 @@ fun List<SentenceToken>.moved(from: Int, to: Int): List<SentenceToken> {
 }
 
 /**
+ * Returns the index the dragged token at [from] should move to so that it lands
+ * where [dropX] was dropped, given the center X of every token in [centerXs].
+ * Slots are split at the midpoint between adjacent token centers, so dropping
+ * closer to a neighbour than to the token's own slot moves it past that
+ * neighbour. Returns `null` when the token stays in its own slot.
+ */
+fun dropTargetIndex(from: Int, dropX: Float, centerXs: List<Float>): Int? {
+    if (from !in centerXs.indices) return null
+    val slot = centerXs.zipWithNext().count { (a, b) -> (a + b) / 2f < dropX }
+    return if (slot == from) null else slot
+}
+
+/**
  * Returns the list with the typed text at [index] replaced by [text], or that
  * token removed when [text] is empty. Indexes that are not [SentenceToken.Text]
  * are left untouched.

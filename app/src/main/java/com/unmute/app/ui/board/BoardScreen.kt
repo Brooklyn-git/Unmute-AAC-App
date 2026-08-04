@@ -46,6 +46,9 @@ import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.focus.FocusRequester
+import androidx.compose.ui.focus.focusRequester
+import androidx.compose.ui.focus.onFocusChanged
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.SolidColor
@@ -73,6 +76,7 @@ import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.SentenceToken
 import com.unmute.app.domain.model.deleteWordBefore
+import com.unmute.app.domain.model.dropTargetIndex
 import com.unmute.app.domain.model.label
 import com.unmute.app.tts.TtsIssue
 import kotlinx.coroutines.delay
@@ -482,6 +486,16 @@ private fun SentenceBar(
         }
     }
 
+    val composingFocus = remember { FocusRequester() }
+    var requestComposeFocus by remember { mutableStateOf(false) }
+    LaunchedEffect(requestComposeFocus) {
+        if (requestComposeFocus) {
+            requestComposeFocus = false
+            delay(50)
+            composingFocus.requestFocus()
+        }
+    }
+
     val onBackspace = {
         if (showCards) {
             when {
@@ -519,14 +533,14 @@ private fun SentenceBar(
                     composingValue = composingValue,
                     composingIndex = composingIndex,
                     anchorIndex = anchorIndex,
+                    composingFocus = composingFocus,
                     onComposingValueChange = {
                         composingValue = it
                         onInsertText(anchorIndex, it.text)
                     },
                     onTextChange = onTextChange,
-                    onSelectIndex = { index ->
-                        selectedIndex = if (selectedIndex == index) null else index
-                    },
+                    onSelectIndex = { selectedIndex = it },
+                    onRequestComposeFocus = { requestComposeFocus = true },
                     onClearSelection = { selectedIndex = null },
                     onMoveToken = onMoveToken,
                     modifier = Modifier.weight(1f),
@@ -599,15 +613,17 @@ private fun CardSentenceInput(
     composingValue: TextFieldValue,
     composingIndex: Int,
     anchorIndex: Int?,
+    composingFocus: FocusRequester,
     onComposingValueChange: (TextFieldValue) -> Unit,
     onTextChange: (Int, String) -> Unit,
     onSelectIndex: (Int) -> Unit,
+    onRequestComposeFocus: () -> Unit,
     onClearSelection: () -> Unit,
     onMoveToken: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
-    val chipBounds = remember { mutableStateMapOf<Int, Rect>() }
+    val tokenBounds = remember { mutableStateMapOf<Int, Rect>() }
     var draggingIndex by remember { mutableStateOf<Int?>(null) }
     var dragStart by remember { mutableStateOf<Offset?>(null) }
     var dragOffset by remember { mutableStateOf(Offset.Zero) }
@@ -626,14 +642,17 @@ private fun CardSentenceInput(
         tokens.forEachIndexed { index, token ->
             when (token) {
                 is SentenceToken.Card -> {
+                    val chipSelected = anchorIndex == index
                     SentenceChip(
                         token = token,
-                        selected = anchorIndex == index,
+                        selected = chipSelected,
                         dragging = draggingIndex == index,
                         dragOffset = if (draggingIndex == index) dragOffset else Offset.Zero,
-                        onClick = { onSelectIndex(index) },
+                        onClick = {
+                            if (chipSelected) onRequestComposeFocus() else onSelectIndex(index)
+                        },
                         onGloballyPositioned = { coordinates ->
-                            chipBounds[index] = coordinates.boundsInRoot()
+                            tokenBounds[index] = coordinates.boundsInRoot()
                         },
                         onDragStart = { startPosition ->
                             onClearSelection()
@@ -646,25 +665,22 @@ private fun CardSentenceInput(
                         },
                         onDragEnd = {
                             val from = draggingIndex
-                            val dropCenter = chipBounds[from]?.center?.plus(dragOffset)
+                            val dropCenter = tokenBounds[from]?.center?.plus(dragOffset)
                             draggingIndex = null
                             dragStart = null
                             dragOffset = Offset.Zero
                             if (from != null && dropCenter != null) {
-                                val target = chipBounds
-                                    .entries
-                                    .firstOrNull { (otherIndex, bounds) ->
-                                        otherIndex != from && bounds.contains(dropCenter)
-                                    }
-                                    ?.key
-                                    ?: if (dropCenter.x > chipBounds.values.maxOf { it.right }) {
-                                        tokens.lastIndex
-                                    } else if (dropCenter.x < chipBounds.values.minOf { it.left }) {
-                                        0
-                                    } else {
-                                        null
-                                    }
-                                if (target != null) onMoveToken(from, target)
+                                val centerXs = tokens.indices.map { index ->
+                                    tokenBounds[index]?.center?.x
+                                }
+                                if (centerXs.none { it == null }) {
+                                    val target = dropTargetIndex(
+                                        from = from,
+                                        dropX = dropCenter.x,
+                                        centerXs = centerXs.mapNotNull { it },
+                                    )
+                                    if (target != null) onMoveToken(from, target)
+                                }
                             }
                         },
                         onDragCancel = {
@@ -676,9 +692,11 @@ private fun CardSentenceInput(
                     if (anchorIndex == index) {
                         ComposingTextField(
                             value = composingValue,
-                            minWidth = if (composingValue.text.isEmpty()) 28.dp else 100.dp,
+                            minWidth = 12.dp,
+                            showCaret = true,
                             showHint = false,
                             onValueChange = onComposingValueChange,
+                            modifier = Modifier.focusRequester(composingFocus),
                         )
                     }
                 }
@@ -687,6 +705,9 @@ private fun CardSentenceInput(
                         TextTokenField(
                             text = token.text,
                             onTextChange = { onTextChange(index, it) },
+                            onGloballyPositioned = { coordinates ->
+                                tokenBounds[index] = coordinates.boundsInRoot()
+                            },
                         )
                     }
                 }
@@ -695,13 +716,11 @@ private fun CardSentenceInput(
         if (anchorIndex == null) {
             ComposingTextField(
                 value = composingValue,
-                minWidth = when {
-                    tokens.isEmpty() -> 100.dp
-                    composingValue.text.isNotEmpty() -> 100.dp
-                    else -> 0.dp
-                },
-                showHint = tokens.isEmpty() && composingValue.text.isEmpty(),
+                minWidth = if (tokens.isEmpty()) 100.dp else 12.dp,
+                showCaret = tokens.isNotEmpty(),
+                showHint = tokens.isEmpty(),
                 onValueChange = onComposingValueChange,
+                modifier = Modifier.focusRequester(composingFocus),
             )
         }
     }
@@ -711,6 +730,7 @@ private fun CardSentenceInput(
 private fun TextTokenField(
     text: String,
     onTextChange: (String) -> Unit,
+    onGloballyPositioned: (LayoutCoordinates) -> Unit,
 ) {
     var value by remember { mutableStateOf(TextFieldValue(text)) }
     LaunchedEffect(text) {
@@ -729,7 +749,9 @@ private fun TextTokenField(
             color = MaterialTheme.colorScheme.onSurface,
         ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = Modifier.padding(end = 4.dp),
+        modifier = Modifier
+            .padding(end = 4.dp)
+            .onGloballyPositioned(onGloballyPositioned),
     )
 }
 
@@ -737,9 +759,12 @@ private fun TextTokenField(
 private fun ComposingTextField(
     value: TextFieldValue,
     minWidth: Dp,
+    showCaret: Boolean,
     showHint: Boolean,
     onValueChange: (TextFieldValue) -> Unit,
+    modifier: Modifier = Modifier,
 ) {
+    var focused by remember { mutableStateOf(false) }
     BasicTextField(
         value = value,
         onValueChange = onValueChange,
@@ -748,19 +773,27 @@ private fun ComposingTextField(
             color = MaterialTheme.colorScheme.onSurface,
         ),
         cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-        modifier = Modifier
+        modifier = modifier
             .widthIn(min = minWidth)
-            .padding(horizontal = 8.dp),
+            .padding(horizontal = 4.dp)
+            .onFocusChanged { focused = it.isFocused },
         decorationBox = { innerTextField ->
             Box {
-                if (showHint) {
-                    Text(
+                when {
+                    value.text.isEmpty() && showHint -> Text(
                         text = stringResource(R.string.sentence_hint),
                         style = MaterialTheme.typography.headlineSmall,
                         color = MaterialTheme.colorScheme.onSurfaceVariant,
                     )
+                    value.text.isEmpty() && showCaret && !focused -> Text(
+                        text = "|",
+                        style = MaterialTheme.typography.headlineSmall.copy(
+                            color = MaterialTheme.colorScheme.primary,
+                            fontWeight = FontWeight.Bold,
+                        ),
+                    )
+                    else -> innerTextField()
                 }
-                innerTextField()
             }
         },
     )
