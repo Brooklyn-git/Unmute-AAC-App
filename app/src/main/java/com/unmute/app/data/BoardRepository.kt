@@ -8,6 +8,7 @@ import com.unmute.app.data.local.CategoryDao
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileDao
 import com.unmute.app.data.local.GridProfileEntity
+import com.unmute.app.domain.model.ImageType
 import kotlinx.coroutines.flow.Flow
 
 class BoardRepository(
@@ -76,6 +77,8 @@ class BoardRepository(
         nameEn: String,
         nameEs: String,
         color: Long,
+        symbolType: ImageType = ImageType.EMOJI,
+        symbolValue: String = "",
         orderIndex: Int,
     ): Long = categoryDao.insert(
         CategoryEntity(
@@ -85,12 +88,15 @@ class BoardRepository(
             color = color,
             orderIndex = orderIndex,
             isPreset = false,
+            symbolType = symbolType,
+            symbolValue = symbolValue,
         ),
     )
 
+    suspend fun updateCategory(category: CategoryEntity) = categoryDao.update(category)
+
     /** Deletes [category] and returns its cards so callers can clean up photos. */
-    suspend fun deleteCategory(category: CategoryEntity): List<CardEntity> {
-        if (category.isPreset) return emptyList()
+    suspend fun deleteCategory(category: CategoryEntity): List<CardEntity> {        if (category.isPreset) return emptyList()
         val cards = cardDao.getCards(category.id)
         categoryDao.delete(category)
         return cards
@@ -118,6 +124,8 @@ class BoardRepository(
                     color = category.color,
                     orderIndex = categoryIndex,
                     isPreset = true,
+                    symbolType = category.symbolType,
+                    symbolValue = category.symbolValue,
                 ),
             )
             category.cards.forEachIndexed { cardIndex, card ->

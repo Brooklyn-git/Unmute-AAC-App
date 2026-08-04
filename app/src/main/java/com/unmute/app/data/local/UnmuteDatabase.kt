@@ -14,7 +14,7 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CardEntity::class,
         GridProfileEntity::class,
     ],
-    version = 2,
+    version = 3,
     exportSchema = true,
 )
 abstract class UnmuteDatabase : RoomDatabase() {
@@ -31,9 +31,32 @@ abstract class UnmuteDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_2_3 = object : Migration(2, 3) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL("ALTER TABLE categories ADD COLUMN symbolType INTEGER NOT NULL DEFAULT 2")
+                db.execSQL("ALTER TABLE categories ADD COLUMN symbolValue TEXT NOT NULL DEFAULT ''")
+                db.execSQL(
+                    """
+                    UPDATE categories
+                    SET symbolType = (
+                            SELECT imageType FROM cards
+                            WHERE cards.categoryId = categories.id
+                            ORDER BY orderIndex LIMIT 1
+                        ),
+                        symbolValue = (
+                            SELECT imageValue FROM cards
+                            WHERE cards.categoryId = categories.id
+                            ORDER BY orderIndex LIMIT 1
+                        )
+                    WHERE symbolValue = ''
+                    """.trimIndent(),
+                )
+            }
+        }
+
         fun build(context: Context): UnmuteDatabase =
             Room.databaseBuilder(context, UnmuteDatabase::class.java, "unmute.db")
-                .addMigrations(MIGRATION_1_2)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3)
                 .build()
     }
 }

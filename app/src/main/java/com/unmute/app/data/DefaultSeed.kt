@@ -11,6 +11,7 @@ internal object DefaultSeed {
             nameEn="Greetings",
             nameEs="Saludos",
             color=0xFF4FC3F7L,
+            symbolValue="👋",
             cards = listOf(
                 DefaultCard(
                     labelEn="Hello",
@@ -98,6 +99,7 @@ internal object DefaultSeed {
             nameEn="People",
             nameEs="Personas",
             color=0xFFF06292L,
+            symbolValue="🧑",
             cards = listOf(
                 DefaultCard(
                     labelEn="Mum",
@@ -169,6 +171,7 @@ internal object DefaultSeed {
             nameEn="Feelings",
             nameEs="Sentimientos",
             color=0xFFFFD54FL,
+            symbolValue="😊",
             cards = listOf(
                 DefaultCard(
                     labelEn="Happy",
@@ -256,6 +259,7 @@ internal object DefaultSeed {
             nameEn="Food & Drink",
             nameEs="Comida y bebida",
             color=0xFFFFB74DL,
+            symbolValue="🍎",
             cards = listOf(
                 DefaultCard(
                     labelEn="Eat",
@@ -391,6 +395,7 @@ internal object DefaultSeed {
             nameEn="Actions",
             nameEs="Acciones",
             color=0xFF81C784L,
+            symbolValue="⚽",
             cards = listOf(
                 DefaultCard(
                     labelEn="Want",
@@ -534,6 +539,7 @@ internal object DefaultSeed {
             nameEn="Places",
             nameEs="Lugares",
             color=0xFFBA68C8L,
+            symbolValue="🏠",
             cards = listOf(
                 DefaultCard(
                     labelEn="Home",
@@ -605,6 +611,7 @@ internal object DefaultSeed {
             nameEn="Things",
             nameEs="Objetos",
             color=0xFF4DB6ACL,
+            symbolValue="🧸",
             cards = listOf(
                 DefaultCard(
                     labelEn="Car",
@@ -740,6 +747,7 @@ internal object DefaultSeed {
             nameEn="Body",
             nameEs="Cuerpo",
             color=0xFFAED581L,
+            symbolValue="🧍",
             cards = listOf(
                 DefaultCard(
                     labelEn="Head",
@@ -773,6 +781,8 @@ internal object DefaultSeed {
         val nameEn: String,
         val nameEs: String,
         val color: Long,
+        val symbolType: ImageType = ImageType.EMOJI,
+        val symbolValue: String = "",
         val cards: List<DefaultCard>,
     )
 

@@ -34,6 +34,8 @@ data class CategoryEntity(
     val color: Long,
     val orderIndex: Int,
     val isPreset: Boolean = false,
+    val symbolType: ImageType = ImageType.EMOJI,
+    val symbolValue: String = "",
 )
 
 @Entity(
