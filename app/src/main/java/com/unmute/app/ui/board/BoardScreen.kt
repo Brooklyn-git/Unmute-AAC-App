@@ -219,6 +219,7 @@ fun BoardScreen(
                         onEditCategory = { editingSection = it },
                         editable = editMode,
                         onAddSection = { addingSection = true },
+                        showSymbols = settings.showSectionSymbols,
                     )
                     if (cards.isEmpty() && !editMode) {
                         EmptyState()

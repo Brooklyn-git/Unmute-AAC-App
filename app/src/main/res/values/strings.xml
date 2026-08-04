@@ -15,6 +15,7 @@
     <string name="section_layout_tabs">Tabs</string>
     <string name="section_layout_grid">Grid</string>
     <string name="speak_section_names">Speak section names</string>
+    <string name="show_section_symbols">Show section icons</string>
 
     <string name="secure_mode">Secure mode</string>
     <string name="secure_mode_toggle">Secure Mode</string>

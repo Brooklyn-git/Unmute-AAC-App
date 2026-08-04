@@ -83,6 +83,10 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setSpeakSectionNames(enabled) }
     }
 
+    fun setShowSectionSymbols(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setShowSectionSymbols(enabled) }
+    }
+
     fun setSecureMode(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setSecureMode(enabled) }
     }

@@ -185,6 +185,13 @@ fun SettingsScreen(
                         checked = settings.speakSectionNames,
                         onCheckedChange = viewModel::setSpeakSectionNames,
                     )
+                    if (settings.sectionLayout == SectionLayout.TABS) {
+                        ToggleRow(
+                            label = stringResource(R.string.show_section_symbols),
+                            checked = settings.showSectionSymbols,
+                            onCheckedChange = viewModel::setShowSectionSymbols,
+                        )
+                    }
                 }
             }
 

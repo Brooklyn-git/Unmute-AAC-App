@@ -56,6 +56,7 @@ fun ReorderableCategoryTabs(
     onEditCategory: (CategoryEntity) -> Unit,
     editable: Boolean,
     onAddSection: () -> Unit,
+    showSymbols: Boolean = true,
     modifier: Modifier = Modifier,
 ) {
     val listState = rememberLazyListState()
@@ -142,6 +143,7 @@ fun ReorderableCategoryTabs(
                         color = Color(category.color),
                         selected = selected,
                         language = language,
+                        showSymbol = showSymbols && category.symbolValue.isNotBlank(),
                         onClick = { onSelect(category.id) },
                     )
                     if (editable) {
@@ -223,6 +225,7 @@ private fun CategoryChip(
     color: Color,
     selected: Boolean,
     language: String,
+    showSymbol: Boolean,
     onClick: () -> Unit,
 ) {
     Surface(
@@ -235,7 +238,7 @@ private fun CategoryChip(
             verticalAlignment = Alignment.CenterVertically,
             modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
         ) {
-            if (category.symbolValue.isNotBlank()) {
+            if (showSymbol) {
                 SectionImage(
                     category = category,
                     modifier = Modifier.size(24.dp),
@@ -245,7 +248,7 @@ private fun CategoryChip(
                 text = category.label(language),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
-                modifier = Modifier.padding(start = if (category.symbolValue.isNotBlank()) 6.dp else 0.dp),
+                modifier = Modifier.padding(start = if (showSymbol) 6.dp else 0.dp),
             )
         }
     }

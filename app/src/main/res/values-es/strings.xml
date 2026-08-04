@@ -15,6 +15,7 @@
     <string name="section_layout_tabs">Pestañas</string>
     <string name="section_layout_grid">Cuadrícula</string>
     <string name="speak_section_names">Hablar nombres de secciones</string>
+    <string name="show_section_symbols">Mostrar iconos de secciones</string>
 
     <string name="secure_mode">Modo seguro</string>
     <string name="secure_mode_toggle">Modo seguro</string>
