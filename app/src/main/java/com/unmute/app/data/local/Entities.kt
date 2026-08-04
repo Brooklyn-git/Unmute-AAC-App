@@ -61,6 +61,7 @@ data class CardEntity(
     val imageValue: String,
     val color: Long?,
     val orderIndex: Int,
+    val shortcutCategoryId: Long? = null,
 )
 
 @Entity(tableName = "grid_profiles")

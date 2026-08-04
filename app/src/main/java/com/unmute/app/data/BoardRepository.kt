@@ -95,9 +95,11 @@ class BoardRepository(
 
     suspend fun updateCategory(category: CategoryEntity) = categoryDao.update(category)
 
-    /** Deletes [category] and returns its cards so callers can clean up photos. */
-    suspend fun deleteCategory(category: CategoryEntity): List<CardEntity> {        if (category.isPreset) return emptyList()
+    /** Deletes [category], clears any card shortcuts to it, and returns its cards so callers can clean up photos. */
+    suspend fun deleteCategory(category: CategoryEntity): List<CardEntity> {
+        if (category.isPreset) return emptyList()
         val cards = cardDao.getCards(category.id)
+        cardDao.clearShortcutsTo(category.id)
         categoryDao.delete(category)
         return cards
     }

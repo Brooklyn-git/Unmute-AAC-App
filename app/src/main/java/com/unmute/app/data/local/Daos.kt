@@ -96,6 +96,9 @@ interface CardDao {
     @Query("UPDATE cards SET orderIndex = :orderIndex WHERE id = :cardId")
     suspend fun updateOrderIndex(cardId: Long, orderIndex: Int)
 
+    @Query("UPDATE cards SET shortcutCategoryId = NULL WHERE shortcutCategoryId = :categoryId")
+    suspend fun clearShortcutsTo(categoryId: Long)
+
     @Transaction
     suspend fun updateOrder(order: List<Pair<Long, Int>>) {
         order.forEach { (cardId, orderIndex) -> updateOrderIndex(cardId, orderIndex) }
