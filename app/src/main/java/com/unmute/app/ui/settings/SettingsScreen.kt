@@ -252,6 +252,11 @@ fun SettingsScreen(
                     checked = settings.autospeak,
                     onCheckedChange = viewModel::setAutospeak,
                 )
+                ToggleRow(
+                    label = stringResource(R.string.show_sentence_cards),
+                    checked = settings.showSentenceCards,
+                    onCheckedChange = viewModel::setShowSentenceCards,
+                )
                 Button(
                     onClick = viewModel::testSpeech,
                     modifier = Modifier

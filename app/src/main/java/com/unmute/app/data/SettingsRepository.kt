@@ -33,6 +33,7 @@ data class AppSettings(
     val sectionLayout: SectionLayout = SectionLayout.TABS,
     val speakSectionNames: Boolean = false,
     val showSectionSymbols: Boolean = true,
+    val showSentenceCards: Boolean = false,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -61,6 +62,7 @@ class SettingsRepository(private val context: Context) {
                 ?: SectionLayout.TABS,
             speakSectionNames = prefs[KEY_SPEAK_SECTION_NAMES] ?: false,
             showSectionSymbols = prefs[KEY_SHOW_SECTION_SYMBOLS] ?: true,
+            showSentenceCards = prefs[KEY_SHOW_SENTENCE_CARDS] ?: false,
         )
     }
 
@@ -132,6 +134,10 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SHOW_SECTION_SYMBOLS] = enabled }
     }
 
+    suspend fun setShowSentenceCards(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_SHOW_SENTENCE_CARDS] = enabled }
+    }
+
     /** Overwrites every stored setting with [appSettings]. */
     suspend fun restore(appSettings: AppSettings) {
         context.dataStore.edit { prefs ->
@@ -154,6 +160,7 @@ class SettingsRepository(private val context: Context) {
             prefs[KEY_SECTION_LAYOUT] = appSettings.sectionLayout.name
             prefs[KEY_SPEAK_SECTION_NAMES] = appSettings.speakSectionNames
             prefs[KEY_SHOW_SECTION_SYMBOLS] = appSettings.showSectionSymbols
+            prefs[KEY_SHOW_SENTENCE_CARDS] = appSettings.showSentenceCards
         }
     }
 
@@ -173,6 +180,7 @@ class SettingsRepository(private val context: Context) {
         val KEY_SECTION_LAYOUT = stringPreferencesKey("section_layout")
         val KEY_SPEAK_SECTION_NAMES = booleanPreferencesKey("speak_section_names")
         val KEY_SHOW_SECTION_SYMBOLS = booleanPreferencesKey("show_section_symbols")
+        val KEY_SHOW_SENTENCE_CARDS = booleanPreferencesKey("show_sentence_cards")
 
         const val DEFAULT_SECURE_TAPS = 3
         const val MIN_SECURE_TAPS = 1

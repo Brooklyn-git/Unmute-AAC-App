@@ -8,6 +8,8 @@ import androidx.compose.runtime.remember
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.layout.ContentScale
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import coil.compose.AsyncImage
@@ -17,22 +19,38 @@ import java.io.File
 
 @Composable
 fun CardImage(card: CardEntity, modifier: Modifier = Modifier) {
-    when (card.imageType) {
+    SymbolImage(
+        imageType = card.imageType,
+        imageValue = card.imageValue,
+        modifier = modifier,
+    )
+}
+
+/** Renders any card symbol (SVG, photo or emoji) at the given size. */
+@Composable
+fun SymbolImage(
+    imageType: ImageType,
+    imageValue: String,
+    modifier: Modifier = Modifier,
+    symbolPadding: Dp = 12.dp,
+    emojiFontSize: TextUnit = 56.sp,
+) {
+    when (imageType) {
         ImageType.SYMBOL -> AsyncImage(
-            model = "file:///android_asset/${card.imageValue}",
+            model = "file:///android_asset/$imageValue",
             contentDescription = null,
             contentScale = ContentScale.Fit,
             modifier = modifier
                 .fillMaxSize()
-                .padding(12.dp),
+                .padding(symbolPadding),
         )
 
         ImageType.PHOTO -> {
-            val model = remember(card.imageValue) {
-                if (card.imageValue.startsWith("content://") || card.imageValue.startsWith("http")) {
-                    card.imageValue
+            val model = remember(imageValue) {
+                if (imageValue.startsWith("content://") || imageValue.startsWith("http")) {
+                    imageValue
                 } else {
-                    File(card.imageValue)
+                    File(imageValue)
                 }
             }
             AsyncImage(
@@ -44,8 +62,8 @@ fun CardImage(card: CardEntity, modifier: Modifier = Modifier) {
         }
 
         ImageType.EMOJI -> Text(
-            text = card.imageValue,
-            fontSize = 56.sp,
+            text = imageValue,
+            fontSize = emojiFontSize,
             textAlign = TextAlign.Center,
             modifier = modifier
                 .fillMaxSize()

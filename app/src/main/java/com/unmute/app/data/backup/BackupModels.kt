@@ -76,4 +76,5 @@ data class BackupSettings(
     val secureResetSeconds: Int,
     val sectionLayout: String = "TABS",
     val speakSectionNames: Boolean = false,
+    val showSentenceCards: Boolean = false,
 )

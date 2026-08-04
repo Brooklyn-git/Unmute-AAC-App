@@ -87,6 +87,10 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setShowSectionSymbols(enabled) }
     }
 
+    fun setShowSentenceCards(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setShowSentenceCards(enabled) }
+    }
+
     fun setSecureMode(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setSecureMode(enabled) }
     }

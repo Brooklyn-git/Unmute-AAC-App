@@ -1,16 +1,23 @@
 package com.unmute.app.ui.board
 
+import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
+import androidx.compose.foundation.layout.Spacer
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
+import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.text.BasicTextField
 import androidx.compose.material.icons.Icons
-import androidx.compose.material.icons.filled.ArrowBack
-import androidx.compose.material.icons.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.Backspace
+import androidx.compose.material.icons.automirrored.filled.ArrowBack
 import androidx.compose.material.icons.filled.Clear
 import androidx.compose.material.icons.filled.GridView
 import androidx.compose.material.icons.filled.Lock
@@ -40,7 +47,9 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.graphics.SolidColor
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
+import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
@@ -51,6 +60,8 @@ import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.SectionLayout
+import com.unmute.app.domain.model.SentenceToken
+import com.unmute.app.domain.model.deleteWordBefore
 import com.unmute.app.domain.model.label
 import com.unmute.app.tts.TtsIssue
 import kotlinx.coroutines.delay
@@ -67,6 +78,7 @@ fun BoardScreen(
     val selectedCategoryId by viewModel.selectedCategoryId.collectAsStateWithLifecycle()
     val cards by viewModel.cards.collectAsStateWithLifecycle()
     val sentence by viewModel.sentence.collectAsStateWithLifecycle()
+    val sentenceText by viewModel.sentenceText.collectAsStateWithLifecycle()
     val editMode by viewModel.editMode.collectAsStateWithLifecycle()
     val columns by viewModel.activeColumns.collectAsStateWithLifecycle()
     val gridProfiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
@@ -212,11 +224,15 @@ fun BoardScreen(
                 .padding(innerPadding),
         ) {
             SentenceBar(
-                sentence = sentence,
+                tokens = sentence,
+                sentenceText = sentenceText,
+                showCards = settings.showSentenceCards,
                 onSentenceChange = viewModel::setSentence,
+                onTrailingTextChange = viewModel::updateTrailingText,
+                onRemoveToken = viewModel::removeTokenAt,
+                onRemoveLastCard = viewModel::removeLastCard,
                 onSpeak = viewModel::speakSentence,
                 onClear = viewModel::clearSentence,
-                onRemoveLast = viewModel::removeLastWord,
             )
             when (settings.sectionLayout) {
                 SectionLayout.TABS -> {
@@ -282,7 +298,7 @@ fun BoardScreen(
                         ) {
                             IconButton(onClick = { showSections = true }) {
                                 Icon(
-                                    Icons.Default.ArrowBack,
+                                    Icons.AutoMirrored.Filled.ArrowBack,
                                     contentDescription = stringResource(R.string.back_to_sections),
                                 )
                             }
@@ -415,12 +431,58 @@ private const val NEW_CARD_EMOJI = "❓"
 
 @Composable
 private fun SentenceBar(
-    sentence: String,
+    tokens: List<SentenceToken>,
+    sentenceText: String,
+    showCards: Boolean,
     onSentenceChange: (String) -> Unit,
+    onTrailingTextChange: (String) -> Unit,
+    onRemoveToken: (Int) -> Unit,
+    onRemoveLastCard: () -> Unit,
     onSpeak: () -> Unit,
     onClear: () -> Unit,
-    onRemoveLast: () -> Unit,
 ) {
+    var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    var textValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(sentenceText))
+    }
+    val trailingText = (tokens.lastOrNull() as? SentenceToken.Text)?.text.orEmpty()
+    var trailingValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(trailingText))
+    }
+
+    LaunchedEffect(sentenceText) {
+        if (sentenceText != textValue.text) {
+            textValue = TextFieldValue(sentenceText, TextRange(sentenceText.length))
+        }
+    }
+    LaunchedEffect(trailingText) {
+        if (trailingText != trailingValue.text) {
+            trailingValue = TextFieldValue(trailingText, TextRange(trailingText.length))
+        }
+    }
+
+    val onBackspace = {
+        if (showCards) {
+            val selected = selectedIndex
+            when {
+                selected != null -> {
+                    onRemoveToken(selected)
+                    selectedIndex = null
+                }
+                trailingValue.text.isNotEmpty() -> {
+                    val (newText, caret) = deleteWordBefore(trailingValue.text, trailingValue.selection.min)
+                    trailingValue = TextFieldValue(newText, TextRange(caret))
+                    onTrailingTextChange(newText)
+                }
+                else -> onRemoveLastCard()
+            }
+        } else {
+            val (newText, caret) = deleteWordBefore(textValue.text, textValue.selection.min)
+            textValue = TextFieldValue(newText, TextRange(caret))
+            onSentenceChange(newText)
+        }
+    }
+
     Surface(
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 3.dp,
@@ -431,32 +493,56 @@ private fun SentenceBar(
                 .padding(horizontal = 8.dp, vertical = 8.dp),
             verticalAlignment = Alignment.CenterVertically,
         ) {
-            BasicTextField(
-                value = sentence,
-                onValueChange = onSentenceChange,
-                singleLine = true,
-                textStyle = MaterialTheme.typography.headlineSmall.copy(
-                    color = MaterialTheme.colorScheme.onSurface,
-                ),
-                cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                modifier = Modifier.weight(1f),
-                decorationBox = { innerTextField ->
-                    Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                        if (sentence.isEmpty()) {
-                            Text(
-                                text = stringResource(R.string.sentence_hint),
-                                style = MaterialTheme.typography.headlineSmall,
-                                color = MaterialTheme.colorScheme.onSurfaceVariant,
-                            )
-                        }
-                        innerTextField()
-                    }
-                },
-            )
-            IconButton(onClick = onRemoveLast, enabled = sentence.isNotEmpty()) {
-                Icon(Icons.Default.Backspace, contentDescription = stringResource(R.string.remove_last))
+            if (showCards) {
+                CardSentenceInput(
+                    tokens = tokens,
+                    trailingValue = trailingValue,
+                    selectedIndex = selectedIndex,
+                    onTrailingValueChange = {
+                        trailingValue = it
+                        onTrailingTextChange(it.text)
+                    },
+                    onSelectIndex = { index ->
+                        selectedIndex = if (selectedIndex == index) null else index
+                    },
+                    modifier = Modifier.weight(1f),
+                )
+            } else {
+                Box(modifier = Modifier.weight(1f)) {
+                    BasicTextField(
+                        value = textValue,
+                        onValueChange = {
+                            textValue = it
+                            onSentenceChange(it.text)
+                        },
+                        singleLine = true,
+                        textStyle = MaterialTheme.typography.headlineSmall.copy(
+                            color = MaterialTheme.colorScheme.onSurface,
+                        ),
+                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                        modifier = Modifier.fillMaxWidth(),
+                        decorationBox = { innerTextField ->
+                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                if (textValue.text.isEmpty()) {
+                                    Text(
+                                        text = stringResource(R.string.sentence_hint),
+                                        style = MaterialTheme.typography.headlineSmall,
+                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                    )
+                                }
+                                innerTextField()
+                            }
+                        },
+                    )
+                }
             }
-            IconButton(onClick = onClear, enabled = sentence.isNotEmpty()) {
+            IconButton(onClick = onBackspace, enabled = tokens.isNotEmpty()) {
+                Icon(
+                    Icons.AutoMirrored.Filled.Backspace,
+                    contentDescription = stringResource(R.string.remove_last),
+                )
+            }
+            IconButton(onClick = onClear, enabled = sentenceText.isNotEmpty()) {
                 Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
             }
             Surface(
@@ -464,7 +550,7 @@ private fun SentenceBar(
                 shape = RoundedCornerShape(50),
                 color = MaterialTheme.colorScheme.primary,
                 contentColor = MaterialTheme.colorScheme.onPrimary,
-                enabled = sentence.isNotEmpty(),
+                enabled = sentenceText.isNotEmpty(),
             ) {
                 Row(
                     modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
@@ -479,6 +565,113 @@ private fun SentenceBar(
                     )
                 }
             }
+        }
+    }
+}
+
+@Composable
+private fun CardSentenceInput(
+    tokens: List<SentenceToken>,
+    trailingValue: TextFieldValue,
+    selectedIndex: Int?,
+    onTrailingValueChange: (TextFieldValue) -> Unit,
+    onSelectIndex: (Int) -> Unit,
+    modifier: Modifier = Modifier,
+) {
+    val scrollState = rememberScrollState()
+    LaunchedEffect(tokens.size, trailingValue.text) {
+        delay(50)
+        scrollState.scrollTo(scrollState.maxValue)
+    }
+
+    Row(
+        modifier = modifier.horizontalScroll(scrollState),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        tokens.forEachIndexed { index, token ->
+            when (token) {
+                is SentenceToken.Card -> SentenceChip(
+                    token = token,
+                    selected = selectedIndex == index,
+                    onClick = { onSelectIndex(index) },
+                )
+                is SentenceToken.Text -> {
+                    if (index < tokens.lastIndex) {
+                        Text(
+                            text = token.text,
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurface,
+                            modifier = Modifier.padding(end = 4.dp),
+                        )
+                    }
+                }
+            }
+        }
+        BasicTextField(
+            value = trailingValue,
+            onValueChange = onTrailingValueChange,
+            singleLine = true,
+            textStyle = MaterialTheme.typography.headlineSmall.copy(
+                color = MaterialTheme.colorScheme.onSurface,
+            ),
+            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+            modifier = Modifier
+                .widthIn(min = 100.dp)
+                .padding(horizontal = 8.dp),
+            decorationBox = { innerTextField ->
+                Box {
+                    if (trailingValue.text.isEmpty() && tokens.isEmpty()) {
+                        Text(
+                            text = stringResource(R.string.sentence_hint),
+                            style = MaterialTheme.typography.headlineSmall,
+                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                        )
+                    }
+                    innerTextField()
+                }
+            },
+        )
+    }
+}
+
+@Composable
+private fun SentenceChip(
+    token: SentenceToken.Card,
+    selected: Boolean,
+    onClick: () -> Unit,
+) {
+    Surface(
+        onClick = onClick,
+        shape = RoundedCornerShape(12.dp),
+        color = if (selected) {
+            MaterialTheme.colorScheme.primaryContainer
+        } else {
+            MaterialTheme.colorScheme.surface
+        },
+        border = if (selected) {
+            BorderStroke(2.dp, MaterialTheme.colorScheme.primary)
+        } else {
+            null
+        },
+        modifier = Modifier.padding(end = 6.dp),
+    ) {
+        Row(
+            modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            SymbolImage(
+                imageType = token.imageType,
+                imageValue = token.imageValue,
+                modifier = Modifier.size(32.dp),
+                symbolPadding = 4.dp,
+                emojiFontSize = 20.sp,
+            )
+            Spacer(Modifier.width(6.dp))
+            Text(
+                text = token.label,
+                style = MaterialTheme.typography.titleMedium,
+                maxLines = 1,
+            )
         }
     }
 }

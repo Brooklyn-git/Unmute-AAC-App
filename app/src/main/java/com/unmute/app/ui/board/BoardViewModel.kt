@@ -12,7 +12,10 @@ import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.SectionLayout
+import com.unmute.app.domain.model.SentenceToken
+import com.unmute.app.domain.model.label
 import com.unmute.app.domain.model.resolveLanguage
+import com.unmute.app.domain.model.toSentenceText
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
 import com.unmute.app.util.PhotoStore
@@ -164,8 +167,12 @@ class BoardViewModel(
         }
     }
 
-    private val _sentence = MutableStateFlow("")
-    val sentence: StateFlow<String> = _sentence.asStateFlow()
+    private val _sentence = MutableStateFlow<List<SentenceToken>>(emptyList())
+    val sentence: StateFlow<List<SentenceToken>> = _sentence.asStateFlow()
+
+    val sentenceText: StateFlow<String> = _sentence
+        .map { it.toSentenceText() }
+        .stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), "")
 
     private val _editMode = MutableStateFlow(false)
     val editMode: StateFlow<Boolean> = _editMode.asStateFlow()
@@ -182,40 +189,49 @@ class BoardViewModel(
 
     fun onCardClick(card: CardEntity) {
         val phrase = cardPhrase(card)
-        _sentence.update { appendPhrase(it, phrase) }
+        _sentence.update { it + card.toSentenceToken(phrase) }
         if (settings.value.autospeak) speak(phrase)
     }
 
     fun speakSentence() {
-        val text = _sentence.value
+        val text = _sentence.value.toSentenceText()
         if (text.isBlank()) return
         speak(text)
-        _sentence.value = ""
+        _sentence.value = emptyList()
     }
 
-    fun removeLastWord() {
-        _sentence.update { text ->
-            val trimmed = text.trimEnd()
-            if (trimmed.isEmpty()) {
-                ""
-            } else {
-                val lastSpace = trimmed.lastIndexOf(' ')
-                if (lastSpace == -1) "" else trimmed.substring(0, lastSpace)
+    fun clearSentence() {
+        _sentence.value = emptyList()
+    }
+
+    /** Replaces the sentence with freely edited text. */
+    fun setSentence(text: String) {
+        _sentence.value = if (text.isEmpty()) emptyList() else listOf(SentenceToken.Text(text))
+    }
+
+    /** Updates the typed text at the end of the sentence (card bar mode). */
+    fun updateTrailingText(text: String) {
+        _sentence.update { tokens ->
+            when {
+                tokens.lastOrNull() is SentenceToken.Text ->
+                    if (text.isEmpty()) tokens.dropLast(1) else tokens.dropLast(1) + SentenceToken.Text(text)
+                text.isEmpty() -> tokens
+                else -> tokens + SentenceToken.Text(text)
             }
         }
     }
 
-    fun clearSentence() {
-        _sentence.value = ""
+    /** Removes the card token at [index] (card bar mode). */
+    fun removeTokenAt(index: Int) {
+        _sentence.update { tokens -> tokens.filterIndexed { i, _ -> i != index } }
     }
 
-    fun setSentence(text: String) {
-        _sentence.value = text
-    }
-
-    private fun appendPhrase(current: String, phrase: String): String {
-        val trimmedCurrent = current.trimEnd()
-        return if (trimmedCurrent.isEmpty()) phrase.trim() else "$trimmedCurrent ${phrase.trim()}"
+    /** Removes the last card token, keeping any typed text (card bar mode). */
+    fun removeLastCard() {
+        _sentence.update { tokens ->
+            val lastCard = tokens.indexOfLast { it is SentenceToken.Card }
+            if (lastCard == -1) tokens else tokens.filterIndexed { i, _ -> i != lastCard }
+        }
     }
 
     /** Inserts [card] if new, otherwise updates it. */
@@ -304,6 +320,16 @@ class BoardViewModel(
 
     private fun cardPhrase(card: CardEntity): String =
         if (language.value == "es") card.phraseEs else card.phraseEn
+
+    private fun CardEntity.toSentenceToken(phrase: String): SentenceToken.Card =
+        SentenceToken.Card(
+            cardId = id,
+            phrase = phrase,
+            label = label(language.value),
+            imageType = imageType,
+            imageValue = imageValue,
+            color = color,
+        )
 
     private fun categoryName(category: CategoryEntity): String =
         if (language.value == "es") category.nameEs else category.nameEn

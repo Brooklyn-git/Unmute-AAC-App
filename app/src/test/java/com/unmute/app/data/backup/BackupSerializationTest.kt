@@ -60,6 +60,7 @@ class BackupSerializationTest {
             secureResetSeconds = 2,
             sectionLayout = "GRID",
             speakSectionNames = true,
+            showSentenceCards = true,
         ),
     )
 
@@ -104,6 +105,7 @@ class BackupSerializationTest {
         assertEquals("", decoded.categories[0].symbolValue)
         assertEquals("TABS", decoded.settings.sectionLayout)
         assertEquals(false, decoded.settings.speakSectionNames)
+        assertEquals(false, decoded.settings.showSentenceCards)
         assertEquals(null, decoded.cards[0].shortcutCategoryId)
     }
 }

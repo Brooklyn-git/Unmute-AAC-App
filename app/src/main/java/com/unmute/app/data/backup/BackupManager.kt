@@ -272,6 +272,7 @@ class BackupManager(
         secureResetSeconds = secureResetSeconds,
         sectionLayout = sectionLayout.name,
         speakSectionNames = speakSectionNames,
+        showSentenceCards = showSentenceCards,
     )
 
     private fun BackupSettings.toAppSettings() = AppSettings(
@@ -296,5 +297,6 @@ class BackupManager(
         sectionLayout = runCatching { SectionLayout.valueOf(sectionLayout) }
             .getOrDefault(SectionLayout.TABS),
         speakSectionNames = speakSectionNames,
+        showSentenceCards = showSentenceCards,
     )
 }
