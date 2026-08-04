@@ -284,6 +284,9 @@ class BoardViewModel(
             deletedCards
                 .filter { it.imageType == ImageType.PHOTO }
                 .forEach { PhotoStore.delete(it.imageValue) }
+            if (category.symbolType == ImageType.PHOTO) {
+                PhotoStore.delete(category.symbolValue)
+            }
             val remaining = categories.value.filterNot { it.id == category.id }
             _selectedCategoryId.value = remaining.firstOrNull()?.id
         }
