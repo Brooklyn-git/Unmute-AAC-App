@@ -37,6 +37,11 @@ Unmute is designed to be a simple and intuitive application that turns a phone o
 - **Use your communication device without disconnecting your headphones**, Unmute lets you to select the output device, allowing you to communicate while you keep your headphones on.
 - Adjust TTS speech **rate** and **pitch**, and test the sound from Settings.
 
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/01-board.png width=180>
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/02-editMode.png width=180>
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/03-editOrNewCard.png width=180>
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/04-iconSearch.png width=180>
+
 ---
 
 ## Settings
@@ -47,6 +52,9 @@ Unmute is designed to be a simple and intuitive application that turns a phone o
 - **Speech** — rate, pitch, autospeak, test sound.
 - **Audio output** — automatic, device speakers, headphones or external speakers.
 - **Secure Mode** locks settings to avoid the user to accidentally edit their board.
+
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/05-settingsSecure.png width=180>
+<img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/fastlane/metadata/android/images/phoneScreenshots/06-settingsSecure2.png width=180>
 
 ---
 
