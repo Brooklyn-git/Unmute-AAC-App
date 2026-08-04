@@ -25,7 +25,7 @@ import com.unmute.app.ui.settings.SettingsScreen
 import com.unmute.app.ui.theme.UnmuteTheme
 import java.util.Locale
 import kotlinx.coroutines.flow.first
-import kotlinx.coroutines.flow.map
+import kotlinx.coroutines.flow.mapLatest
 import kotlinx.coroutines.runBlocking
 
 class MainActivity : ComponentActivity() {
@@ -42,9 +42,10 @@ class MainActivity : ComponentActivity() {
         setContent {
             UnmuteTheme {
                 val container = (application as UnmuteApplication).container
-                val language by container.settingsRepository.settings
-                    .map { it.language }
-                    .collectAsStateWithLifecycle(initialValue = appliedLanguage)
+                val languageFlow = remember {
+                    container.settingsRepository.settings.mapLatest { it.language }
+                }
+                val language by languageFlow.collectAsStateWithLifecycle(initialValue = appliedLanguage)
 
                 LaunchedEffect(language) {
                     if (language != appliedLanguage) {
