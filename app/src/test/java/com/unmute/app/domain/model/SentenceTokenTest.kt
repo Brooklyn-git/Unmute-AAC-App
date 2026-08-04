@@ -68,4 +68,139 @@ class SentenceTokenTest {
         assertEquals("lo world", text)
         assertEquals(0, caret)
     }
+
+    @Test
+    fun `moved relocates a token to a later position`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "one", "One", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("two"),
+            SentenceToken.Card(3, "three", "Three", ImageType.EMOJI, "3", null),
+        )
+        val moved = tokens.moved(0, 2)
+        assertEquals(listOf("two", "three", "one"), moved.map { it.text })
+    }
+
+    @Test
+    fun `moved relocates a token to an earlier position`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "one", "One", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("two"),
+            SentenceToken.Card(3, "three", "Three", ImageType.EMOJI, "3", null),
+        )
+        val moved = tokens.moved(2, 0)
+        assertEquals(listOf("three", "one", "two"), moved.map { it.text })
+    }
+
+    @Test
+    fun `moved ignores out of range source indexes and clamps the target`() {
+        val tokens = listOf(SentenceToken.Text("a"), SentenceToken.Text("b"))
+        assertEquals(tokens, tokens.moved(5, 0))
+        assertEquals(listOf("b", "a"), tokens.moved(0, 5).map { it.text })
+    }
+
+    @Test
+    fun `moved is a no-op when moving onto itself`() {
+        val tokens = listOf(SentenceToken.Text("a"), SentenceToken.Text("b"))
+        assertEquals(tokens, tokens.moved(1, 1))
+    }
+
+    @Test
+    fun `withTextAt replaces the typed text at the given index`() {
+        val tokens = listOf(
+            SentenceToken.Text("please"),
+            SentenceToken.Card(2, "water", "Water", ImageType.EMOJI, "💧", null),
+        )
+        val updated = tokens.withTextAt(0, "p")
+        assertEquals(listOf("p", "water"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAt removes the token when the text becomes empty`() {
+        val tokens = listOf(
+            SentenceToken.Text("please"),
+            SentenceToken.Card(2, "water", "Water", ImageType.EMOJI, "💧", null),
+        )
+        val updated = tokens.withTextAt(0, "")
+        assertEquals(listOf("water"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAt ignores indexes that are not text tokens`() {
+        val tokens = listOf(
+            SentenceToken.Card(2, "water", "Water", ImageType.EMOJI, "💧", null),
+        )
+        assertEquals(tokens, tokens.withTextAt(0, "x"))
+        assertEquals(tokens, tokens.withTextAt(3, "x"))
+    }
+
+    @Test
+    fun `withTextAfter null anchor updates the trailing text`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("old"),
+        )
+        val updated = tokens.withTextAfter(null, "new")
+        assertEquals(listOf("I", "new"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter null anchor appends when the sentence ends with a card`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Card(2, "want", "Want", ImageType.EMOJI, "2", null),
+        )
+        val updated = tokens.withTextAfter(null, "to")
+        assertEquals(listOf("I", "want", "to"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter null anchor removes the trailing text when empty`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("to"),
+        )
+        val updated = tokens.withTextAfter(null, "")
+        assertEquals(listOf("I"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter inserts text between cards`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Card(2, "want", "Want", ImageType.EMOJI, "2", null),
+            SentenceToken.Card(3, "water", "Water", ImageType.EMOJI, "3", null),
+        )
+        val updated = tokens.withTextAfter(1, "to")
+        assertEquals(listOf("I", "want", "to", "water"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter updates existing text after the anchor`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("old"),
+            SentenceToken.Card(2, "water", "Water", ImageType.EMOJI, "2", null),
+        )
+        val updated = tokens.withTextAfter(0, "new")
+        assertEquals(listOf("I", "new", "water"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter removes the text after the anchor when empty`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+            SentenceToken.Text("to"),
+            SentenceToken.Card(2, "water", "Water", ImageType.EMOJI, "2", null),
+        )
+        val updated = tokens.withTextAfter(0, "")
+        assertEquals(listOf("I", "water"), updated.map { it.text })
+    }
+
+    @Test
+    fun `withTextAfter null anchor is a no-op when empty and there is no trailing text`() {
+        val tokens = listOf(
+            SentenceToken.Card(1, "I", "I", ImageType.EMOJI, "1", null),
+        )
+        assertEquals(tokens, tokens.withTextAfter(null, ""))
+    }
 }

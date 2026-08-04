@@ -14,8 +14,11 @@ import com.unmute.app.domain.model.ImageType
 import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.SentenceToken
 import com.unmute.app.domain.model.label
+import com.unmute.app.domain.model.moved
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.domain.model.toSentenceText
+import com.unmute.app.domain.model.withTextAfter
+import com.unmute.app.domain.model.withTextAt
 import com.unmute.app.tts.TtsIssue
 import com.unmute.app.tts.TtsManager
 import com.unmute.app.util.PhotoStore
@@ -209,16 +212,9 @@ class BoardViewModel(
         _sentence.value = if (text.isEmpty()) emptyList() else listOf(SentenceToken.Text(text))
     }
 
-    /** Updates the typed text at the end of the sentence (card bar mode). */
-    fun updateTrailingText(text: String) {
-        _sentence.update { tokens ->
-            when {
-                tokens.lastOrNull() is SentenceToken.Text ->
-                    if (text.isEmpty()) tokens.dropLast(1) else tokens.dropLast(1) + SentenceToken.Text(text)
-                text.isEmpty() -> tokens
-                else -> tokens + SentenceToken.Text(text)
-            }
-        }
+    /** Inserts or updates typed text after [afterIndex] (null = end of the sentence). */
+    fun insertTextAt(afterIndex: Int?, text: String) {
+        _sentence.update { it.withTextAfter(afterIndex, text) }
     }
 
     /** Removes the card token at [index] (card bar mode). */
@@ -232,6 +228,16 @@ class BoardViewModel(
             val lastCard = tokens.indexOfLast { it is SentenceToken.Card }
             if (lastCard == -1) tokens else tokens.filterIndexed { i, _ -> i != lastCard }
         }
+    }
+
+    /** Replaces the typed text at [index], removing that token when it becomes empty (card bar mode). */
+    fun updateTextAt(index: Int, text: String) {
+        _sentence.update { it.withTextAt(index, text) }
+    }
+
+    /** Moves the token at [from] to [to], used by drag-and-drop reordering (card bar mode). */
+    fun moveToken(from: Int, to: Int) {
+        _sentence.update { it.moved(from, to) }
     }
 
     /** Inserts [card] if new, otherwise updates it. */

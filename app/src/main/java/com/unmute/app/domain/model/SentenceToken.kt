@@ -43,3 +43,54 @@ fun deleteWordBefore(text: String, caret: Int): Pair<String, Int> {
     }
     return newText to keptBefore.length
 }
+
+/**
+ * Returns the list with the token at [from] moved to [to]. Out-of-range
+ * indexes are clamped and an unchanged list is returned when nothing moves.
+ */
+fun List<SentenceToken>.moved(from: Int, to: Int): List<SentenceToken> {
+    if (from !in indices) return this
+    val target = to.coerceIn(indices)
+    if (target == from) return this
+    val reordered = toMutableList()
+    reordered.add(target, reordered.removeAt(from))
+    return reordered
+}
+
+/**
+ * Returns the list with the typed text at [index] replaced by [text], or that
+ * token removed when [text] is empty. Indexes that are not [SentenceToken.Text]
+ * are left untouched.
+ */
+fun List<SentenceToken>.withTextAt(index: Int, text: String): List<SentenceToken> {
+    if (getOrNull(index) !is SentenceToken.Text) return this
+    if (text.isEmpty()) return filterIndexed { i, _ -> i != index }
+    return mapIndexed { i, token -> if (i == index) SentenceToken.Text(text) else token }
+}
+
+/**
+ * Inserts or updates typed text in the sentence. With [anchorIndex] null the
+ * text is appended at the end; otherwise it is placed right after the token at
+ * [anchorIndex]. An empty [text] removes the text token at that spot instead.
+ */
+fun List<SentenceToken>.withTextAfter(anchorIndex: Int?, text: String): List<SentenceToken> {
+    val targetIndex = when {
+        anchorIndex != null -> {
+            val position = anchorIndex + 1
+            if (getOrNull(position) is SentenceToken.Text) position else -1
+        }
+        text.isEmpty() -> indexOfLast { it is SentenceToken.Text }
+        lastOrNull() is SentenceToken.Text -> lastIndex
+        else -> -1
+    }
+    if (targetIndex != -1) {
+        return if (text.isEmpty()) {
+            filterIndexed { i, _ -> i != targetIndex }
+        } else {
+            mapIndexed { i, token -> if (i == targetIndex) SentenceToken.Text(text) else token }
+        }
+    }
+    if (text.isEmpty()) return this
+    val insertPosition = if (anchorIndex == null) size else anchorIndex + 1
+    return toMutableList().apply { add(insertPosition, SentenceToken.Text(text)) }
+}

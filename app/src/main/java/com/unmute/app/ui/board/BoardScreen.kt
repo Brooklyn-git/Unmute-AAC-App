@@ -1,6 +1,7 @@
 package com.unmute.app.ui.board
 
 import androidx.compose.foundation.BorderStroke
+import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -38,21 +39,31 @@ import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.SolidColor
+import androidx.compose.ui.graphics.graphicsLayer
+import androidx.compose.ui.input.pointer.pointerInput
+import androidx.compose.ui.layout.LayoutCoordinates
+import androidx.compose.ui.layout.boundsInRoot
+import androidx.compose.ui.layout.onGloballyPositioned
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.TextRange
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.input.TextFieldValue
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.Dp
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import androidx.compose.ui.zIndex
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import com.unmute.app.R
 import com.unmute.app.data.local.CardEntity
@@ -228,9 +239,11 @@ fun BoardScreen(
                 sentenceText = sentenceText,
                 showCards = settings.showSentenceCards,
                 onSentenceChange = viewModel::setSentence,
-                onTrailingTextChange = viewModel::updateTrailingText,
+                onTextChange = viewModel::updateTextAt,
+                onInsertText = viewModel::insertTextAt,
                 onRemoveToken = viewModel::removeTokenAt,
                 onRemoveLastCard = viewModel::removeLastCard,
+                onMoveToken = viewModel::moveToken,
                 onSpeak = viewModel::speakSentence,
                 onClear = viewModel::clearSentence,
             )
@@ -435,19 +448,27 @@ private fun SentenceBar(
     sentenceText: String,
     showCards: Boolean,
     onSentenceChange: (String) -> Unit,
-    onTrailingTextChange: (String) -> Unit,
+    onTextChange: (Int, String) -> Unit,
+    onInsertText: (Int?, String) -> Unit,
     onRemoveToken: (Int) -> Unit,
     onRemoveLastCard: () -> Unit,
+    onMoveToken: (Int, Int) -> Unit,
     onSpeak: () -> Unit,
     onClear: () -> Unit,
 ) {
     var selectedIndex by rememberSaveable { mutableStateOf<Int?>(null) }
+    val anchorIndex = selectedIndex?.takeIf { it in tokens.indices }
+    val composingIndex = when {
+        anchorIndex != null -> anchorIndex + 1
+        tokens.lastOrNull() is SentenceToken.Text -> tokens.lastIndex
+        else -> -1
+    }
+    val composingText = (tokens.getOrNull(composingIndex) as? SentenceToken.Text)?.text.orEmpty()
+    var composingValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
+        mutableStateOf(TextFieldValue(composingText))
+    }
     var textValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
         mutableStateOf(TextFieldValue(sentenceText))
-    }
-    val trailingText = (tokens.lastOrNull() as? SentenceToken.Text)?.text.orEmpty()
-    var trailingValue by rememberSaveable(stateSaver = TextFieldValue.Saver) {
-        mutableStateOf(TextFieldValue(trailingText))
     }
 
     LaunchedEffect(sentenceText) {
@@ -455,24 +476,23 @@ private fun SentenceBar(
             textValue = TextFieldValue(sentenceText, TextRange(sentenceText.length))
         }
     }
-    LaunchedEffect(trailingText) {
-        if (trailingText != trailingValue.text) {
-            trailingValue = TextFieldValue(trailingText, TextRange(trailingText.length))
+    LaunchedEffect(composingIndex, composingText) {
+        if (composingText != composingValue.text) {
+            composingValue = TextFieldValue(composingText, TextRange(composingText.length))
         }
     }
 
     val onBackspace = {
         if (showCards) {
-            val selected = selectedIndex
             when {
-                selected != null -> {
-                    onRemoveToken(selected)
-                    selectedIndex = null
+                composingValue.text.isNotEmpty() -> {
+                    val (newText, caret) = deleteWordBefore(composingValue.text, composingValue.selection.min)
+                    composingValue = TextFieldValue(newText, TextRange(caret))
+                    onInsertText(anchorIndex, newText)
                 }
-                trailingValue.text.isNotEmpty() -> {
-                    val (newText, caret) = deleteWordBefore(trailingValue.text, trailingValue.selection.min)
-                    trailingValue = TextFieldValue(newText, TextRange(caret))
-                    onTrailingTextChange(newText)
+                anchorIndex != null -> {
+                    onRemoveToken(anchorIndex)
+                    selectedIndex = null
                 }
                 else -> onRemoveLastCard()
             }
@@ -496,15 +516,19 @@ private fun SentenceBar(
             if (showCards) {
                 CardSentenceInput(
                     tokens = tokens,
-                    trailingValue = trailingValue,
-                    selectedIndex = selectedIndex,
-                    onTrailingValueChange = {
-                        trailingValue = it
-                        onTrailingTextChange(it.text)
+                    composingValue = composingValue,
+                    composingIndex = composingIndex,
+                    anchorIndex = anchorIndex,
+                    onComposingValueChange = {
+                        composingValue = it
+                        onInsertText(anchorIndex, it.text)
                     },
+                    onTextChange = onTextChange,
                     onSelectIndex = { index ->
                         selectedIndex = if (selectedIndex == index) null else index
                     },
+                    onClearSelection = { selectedIndex = null },
+                    onMoveToken = onMoveToken,
                     modifier = Modifier.weight(1f),
                 )
             } else {
@@ -572,16 +596,27 @@ private fun SentenceBar(
 @Composable
 private fun CardSentenceInput(
     tokens: List<SentenceToken>,
-    trailingValue: TextFieldValue,
-    selectedIndex: Int?,
-    onTrailingValueChange: (TextFieldValue) -> Unit,
+    composingValue: TextFieldValue,
+    composingIndex: Int,
+    anchorIndex: Int?,
+    onComposingValueChange: (TextFieldValue) -> Unit,
+    onTextChange: (Int, String) -> Unit,
     onSelectIndex: (Int) -> Unit,
+    onClearSelection: () -> Unit,
+    onMoveToken: (Int, Int) -> Unit,
     modifier: Modifier = Modifier,
 ) {
     val scrollState = rememberScrollState()
-    LaunchedEffect(tokens.size, trailingValue.text) {
-        delay(50)
-        scrollState.scrollTo(scrollState.maxValue)
+    val chipBounds = remember { mutableStateMapOf<Int, Rect>() }
+    var draggingIndex by remember { mutableStateOf<Int?>(null) }
+    var dragStart by remember { mutableStateOf<Offset?>(null) }
+    var dragOffset by remember { mutableStateOf(Offset.Zero) }
+
+    LaunchedEffect(tokens.size, composingValue.text, anchorIndex) {
+        if (anchorIndex == null || anchorIndex >= tokens.lastIndex) {
+            delay(50)
+            scrollState.scrollTo(scrollState.maxValue)
+        }
     }
 
     Row(
@@ -590,55 +625,159 @@ private fun CardSentenceInput(
     ) {
         tokens.forEachIndexed { index, token ->
             when (token) {
-                is SentenceToken.Card -> SentenceChip(
-                    token = token,
-                    selected = selectedIndex == index,
-                    onClick = { onSelectIndex(index) },
-                )
+                is SentenceToken.Card -> {
+                    SentenceChip(
+                        token = token,
+                        selected = anchorIndex == index,
+                        dragging = draggingIndex == index,
+                        dragOffset = if (draggingIndex == index) dragOffset else Offset.Zero,
+                        onClick = { onSelectIndex(index) },
+                        onGloballyPositioned = { coordinates ->
+                            chipBounds[index] = coordinates.boundsInRoot()
+                        },
+                        onDragStart = { startPosition ->
+                            onClearSelection()
+                            draggingIndex = index
+                            dragStart = startPosition
+                            dragOffset = Offset.Zero
+                        },
+                        onDrag = { position ->
+                            dragOffset = position - (dragStart ?: Offset.Zero)
+                        },
+                        onDragEnd = {
+                            val from = draggingIndex
+                            val dropCenter = chipBounds[from]?.center?.plus(dragOffset)
+                            draggingIndex = null
+                            dragStart = null
+                            dragOffset = Offset.Zero
+                            if (from != null && dropCenter != null) {
+                                val target = chipBounds
+                                    .entries
+                                    .firstOrNull { (otherIndex, bounds) ->
+                                        otherIndex != from && bounds.contains(dropCenter)
+                                    }
+                                    ?.key
+                                    ?: if (dropCenter.x > chipBounds.values.maxOf { it.right }) {
+                                        tokens.lastIndex
+                                    } else if (dropCenter.x < chipBounds.values.minOf { it.left }) {
+                                        0
+                                    } else {
+                                        null
+                                    }
+                                if (target != null) onMoveToken(from, target)
+                            }
+                        },
+                        onDragCancel = {
+                            draggingIndex = null
+                            dragStart = null
+                            dragOffset = Offset.Zero
+                        },
+                    )
+                    if (anchorIndex == index) {
+                        ComposingTextField(
+                            value = composingValue,
+                            minWidth = if (composingValue.text.isEmpty()) 28.dp else 100.dp,
+                            showHint = false,
+                            onValueChange = onComposingValueChange,
+                        )
+                    }
+                }
                 is SentenceToken.Text -> {
-                    if (index < tokens.lastIndex) {
-                        Text(
+                    if (index != composingIndex) {
+                        TextTokenField(
                             text = token.text,
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurface,
-                            modifier = Modifier.padding(end = 4.dp),
+                            onTextChange = { onTextChange(index, it) },
                         )
                     }
                 }
             }
         }
-        BasicTextField(
-            value = trailingValue,
-            onValueChange = onTrailingValueChange,
-            singleLine = true,
-            textStyle = MaterialTheme.typography.headlineSmall.copy(
-                color = MaterialTheme.colorScheme.onSurface,
-            ),
-            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-            modifier = Modifier
-                .widthIn(min = 100.dp)
-                .padding(horizontal = 8.dp),
-            decorationBox = { innerTextField ->
-                Box {
-                    if (trailingValue.text.isEmpty() && tokens.isEmpty()) {
-                        Text(
-                            text = stringResource(R.string.sentence_hint),
-                            style = MaterialTheme.typography.headlineSmall,
-                            color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        )
-                    }
-                    innerTextField()
-                }
-            },
-        )
+        if (anchorIndex == null) {
+            ComposingTextField(
+                value = composingValue,
+                minWidth = when {
+                    tokens.isEmpty() -> 100.dp
+                    composingValue.text.isNotEmpty() -> 100.dp
+                    else -> 0.dp
+                },
+                showHint = tokens.isEmpty() && composingValue.text.isEmpty(),
+                onValueChange = onComposingValueChange,
+            )
+        }
     }
+}
+
+@Composable
+private fun TextTokenField(
+    text: String,
+    onTextChange: (String) -> Unit,
+) {
+    var value by remember { mutableStateOf(TextFieldValue(text)) }
+    LaunchedEffect(text) {
+        if (text != value.text) {
+            value = TextFieldValue(text, TextRange(text.length))
+        }
+    }
+    BasicTextField(
+        value = value,
+        onValueChange = { newValue ->
+            value = newValue
+            onTextChange(newValue.text)
+        },
+        singleLine = true,
+        textStyle = MaterialTheme.typography.headlineSmall.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = Modifier.padding(end = 4.dp),
+    )
+}
+
+@Composable
+private fun ComposingTextField(
+    value: TextFieldValue,
+    minWidth: Dp,
+    showHint: Boolean,
+    onValueChange: (TextFieldValue) -> Unit,
+) {
+    BasicTextField(
+        value = value,
+        onValueChange = onValueChange,
+        singleLine = true,
+        textStyle = MaterialTheme.typography.headlineSmall.copy(
+            color = MaterialTheme.colorScheme.onSurface,
+        ),
+        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+        modifier = Modifier
+            .widthIn(min = minWidth)
+            .padding(horizontal = 8.dp),
+        decorationBox = { innerTextField ->
+            Box {
+                if (showHint) {
+                    Text(
+                        text = stringResource(R.string.sentence_hint),
+                        style = MaterialTheme.typography.headlineSmall,
+                        color = MaterialTheme.colorScheme.onSurfaceVariant,
+                    )
+                }
+                innerTextField()
+            }
+        },
+    )
 }
 
 @Composable
 private fun SentenceChip(
     token: SentenceToken.Card,
     selected: Boolean,
+    dragging: Boolean,
+    dragOffset: Offset,
     onClick: () -> Unit,
+    onGloballyPositioned: (LayoutCoordinates) -> Unit,
+    onDragStart: (Offset) -> Unit,
+    onDrag: (Offset) -> Unit,
+    onDragEnd: () -> Unit,
+    onDragCancel: () -> Unit,
 ) {
     Surface(
         onClick = onClick,
@@ -653,7 +792,24 @@ private fun SentenceChip(
         } else {
             null
         },
-        modifier = Modifier.padding(end = 6.dp),
+        modifier = Modifier
+            .padding(end = 6.dp)
+            .zIndex(if (dragging) 1f else 0f)
+            .graphicsLayer {
+                translationX = if (dragging) dragOffset.x else 0f
+                translationY = if (dragging) dragOffset.y else 0f
+                scaleX = if (dragging) 1.05f else 1f
+                scaleY = if (dragging) 1.05f else 1f
+            }
+            .pointerInput(token.cardId) {
+                detectDragGesturesAfterLongPress(
+                    onDragStart = onDragStart,
+                    onDrag = { change, _ -> onDrag(change.position) },
+                    onDragEnd = onDragEnd,
+                    onDragCancel = onDragCancel,
+                )
+            }
+            .onGloballyPositioned(onGloballyPositioned),
     ) {
         Row(
             modifier = Modifier.padding(horizontal = 10.dp, vertical = 4.dp),
