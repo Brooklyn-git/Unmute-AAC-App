@@ -163,4 +163,22 @@ class WordPredictorTest {
             assertTrue(list.all { it == it.lowercase() })
         }
     }
+
+    @Test
+    fun `common words lists are large and have no duplicates`() {
+        listOf(CommonWords.ENGLISH, CommonWords.SPANISH).forEach { list ->
+            assertTrue("expected at least 300 common words, got ${list.size}", list.size >= 300)
+            assertEquals(list.size, list.distinct().size)
+        }
+    }
+
+    @Test
+    fun `bundled words still match after several letters`() {
+        val english = CommonWords.ENGLISH.map { VocabularyWord(it, WordTier.COMMON) }
+        val spanish = CommonWords.SPANISH.map { VocabularyWord(it, WordTier.COMMON) }
+        assertTrue(predict("th", english, emptyMap(), 4).isNotEmpty())
+        assertTrue(predict("str", english, emptyMap(), 4).isNotEmpty())
+        assertTrue(predict("qui", spanish, emptyMap(), 4).isNotEmpty())
+        assertTrue(predict("enc", spanish, emptyMap(), 4).isNotEmpty())
+    }
 }

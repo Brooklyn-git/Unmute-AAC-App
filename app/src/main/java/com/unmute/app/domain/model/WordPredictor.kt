@@ -17,7 +17,7 @@ data class PredictionVocabulary(
 /** How much the strongest usage stats can add on top of a word's tier score. */
 const val MAX_PREDICTION_USAGE_BOOST = 50
 
-const val DEFAULT_PREDICTION_LIMIT = 3
+const val DEFAULT_PREDICTION_LIMIT = 4
 
 private const val TIER_LABEL_SCORE = 300
 private const val TIER_PHRASE_SCORE = 200
