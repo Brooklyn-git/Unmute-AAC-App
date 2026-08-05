@@ -1,9 +1,23 @@
 package com.unmute.app.domain.model
 
-/** Origin of a vocabulary word, used to rank suggestions. Lower ordinal wins. */
-enum class WordTier { LABEL, PHRASE, COMMON }
+/**
+ * Origin of a vocabulary word, used to rank suggestions. Lower ordinal wins and the
+ * tier score gaps are larger than any combined boost so a higher tier always wins.
+ */
+enum class WordTier(val score: Int) {
+    CATEGORY(600),
+    LABEL(450),
+    PHRASE(300),
+    WORD(150),
+    COMMON(0),
+}
 
-data class VocabularyWord(val word: String, val tier: WordTier)
+data class VocabularyWord(
+    val word: String,
+    val tier: WordTier,
+    /** Whether this word comes from the currently open section and should rank higher. */
+    val contextual: Boolean = false,
+)
 
 /** Persisted usage stats for a word in one language. */
 data class WordUsage(val uses: Int, val lastUsed: Long)
@@ -14,20 +28,20 @@ data class PredictionVocabulary(
     val usage: Map<String, WordUsage>,
 )
 
-/** How much the strongest usage stats can add on top of a word's tier score. */
+/** How much usage stats can add on top of a word's tier score. */
 const val MAX_PREDICTION_USAGE_BOOST = 50
 
-const val DEFAULT_PREDICTION_LIMIT = 4
+/** How much belonging to the open section adds on top of a word's tier score. */
+const val MAX_PREDICTION_CONTEXT_BOOST = 60
 
-private const val TIER_LABEL_SCORE = 300
-private const val TIER_PHRASE_SCORE = 200
-private const val TIER_COMMON_SCORE = 100
+const val DEFAULT_PREDICTION_LIMIT = 4
 
 private data class RankedWord(val word: String, val score: Int, val lastUsed: Long)
 
 /**
- * Completes [prefix] with matching vocabulary words, ranked by tier, then usage
- * (frequency + recency), then alphabetically. Returns at most [limit] words.
+ * Completes [prefix] with matching vocabulary words, ranked by tier, then contextual
+ * relevance, usage (frequency + recency), then alphabetically. Full phrases match
+ * through their first word. Returns at most [limit] words.
  */
 fun predict(
     prefix: String,
@@ -38,21 +52,27 @@ fun predict(
     val normalized = prefix.lowercase().trim()
     if (normalized.isEmpty() || limit <= 0) return emptyList()
 
-    val bestTier = mutableMapOf<String, WordTier>()
+    val best = mutableMapOf<String, VocabularyWord>()
     for (candidate in vocabulary) {
-        if (!candidate.word.lowercase().startsWith(normalized)) continue
-        val existing = bestTier[candidate.word]
-        if (existing == null || candidate.tier.ordinal < existing.ordinal) {
-            bestTier[candidate.word] = candidate.tier
+        if (!candidate.matches(normalized)) continue
+        val existing = best[candidate.word]
+        if (
+            existing == null ||
+            candidate.tier.ordinal < existing.tier.ordinal ||
+            (candidate.tier == existing.tier && candidate.contextual && !existing.contextual)
+        ) {
+            best[candidate.word] = candidate
         }
     }
 
-    return bestTier.entries
-        .map { (word, tier) ->
-            val stats = usage[word]
+    return best.values
+        .map { candidate ->
+            val stats = usage[candidate.word]
             RankedWord(
-                word = word,
-                score = tierScore(tier) + (stats?.uses ?: 0).coerceAtMost(MAX_PREDICTION_USAGE_BOOST),
+                word = candidate.word,
+                score = candidate.tier.score +
+                    (if (candidate.contextual) MAX_PREDICTION_CONTEXT_BOOST else 0) +
+                    (stats?.uses ?: 0).coerceAtMost(MAX_PREDICTION_USAGE_BOOST),
                 lastUsed = stats?.lastUsed ?: Long.MIN_VALUE,
             )
         }
@@ -63,6 +83,15 @@ fun predict(
         )
         .take(limit)
         .map { it.word }
+}
+
+private fun VocabularyWord.matches(normalized: String): Boolean {
+    val start = if (tier == WordTier.PHRASE) {
+        word.lowercase().trim().substringBefore(' ')
+    } else {
+        word.lowercase()
+    }
+    return start.startsWith(normalized)
 }
 
 /** The unfinished word immediately before [caret], or "" when the caret is at a word start. */
@@ -86,24 +115,39 @@ fun applySuggestion(text: String, caret: Int, suggestion: String): Pair<String, 
     return newText to (keepFrom + suggestion.length + separator.length)
 }
 
-/** Builds the suggestion vocabulary from bilingual card labels, phrases and common words. */
+/** Lowercases [this] and splits it into words, keeping apostrophes inside words. */
+fun String.splitToWords(): List<String> =
+    lowercase().split(Regex("[^\\p{L}\\p{M}']+")).filter { it.isNotEmpty() }
+
+/**
+ * Builds the suggestion vocabulary from bilingual section names, card labels, card
+ * phrases (kept whole and also split into words) and common words. Words whose
+ * lowercase form is in [contextualWords] are marked as belonging to the open section.
+ */
 fun vocabularyFrom(
     labels: List<String>,
     phrases: List<String>,
+    categories: List<String>,
     commonWords: List<String>,
-): List<VocabularyWord> = buildList {
-    labels.forEach { label -> label.splitToWords().forEach { add(VocabularyWord(it, WordTier.LABEL)) } }
-    phrases.forEach { phrase -> phrase.splitToWords().forEach { add(VocabularyWord(it, WordTier.PHRASE)) } }
-    commonWords.forEach { add(VocabularyWord(it, WordTier.COMMON)) }
+    contextualWords: Set<String> = emptySet(),
+): List<VocabularyWord> {
+    val contextual = contextualWords.mapTo(mutableSetOf()) { it.lowercase().trim() }
+    return buildList {
+        categories.forEach { name ->
+            name.splitToWords().forEach { add(VocabularyWord(it, WordTier.CATEGORY, it in contextual)) }
+        }
+        labels.forEach { label ->
+            label.splitToWords().forEach { add(VocabularyWord(it, WordTier.LABEL, it in contextual)) }
+        }
+        phrases.forEach { phrase ->
+            val trimmed = phrase.trim()
+            if (trimmed.isNotEmpty()) {
+                add(VocabularyWord(trimmed, WordTier.PHRASE, trimmed.lowercase() in contextual))
+            }
+            phrase.splitToWords().forEach { add(VocabularyWord(it, WordTier.WORD, it in contextual)) }
+        }
+        commonWords.forEach { add(VocabularyWord(it, WordTier.COMMON)) }
+    }
 }
 
 private fun Char.isWordCharacter(): Boolean = isLetter() || this == '\''
-
-private fun String.splitToWords(): List<String> =
-    lowercase().split(Regex("[^\\p{L}\\p{M}']+")).filter { it.isNotEmpty() }
-
-private fun tierScore(tier: WordTier): Int = when (tier) {
-    WordTier.LABEL -> TIER_LABEL_SCORE
-    WordTier.PHRASE -> TIER_PHRASE_SCORE
-    WordTier.COMMON -> TIER_COMMON_SCORE
-}

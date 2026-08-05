@@ -20,6 +20,7 @@ import com.unmute.app.domain.model.label
 import com.unmute.app.domain.model.moved
 import com.unmute.app.domain.model.phrase
 import com.unmute.app.domain.model.resolveLanguage
+import com.unmute.app.domain.model.splitToWords
 import com.unmute.app.domain.model.toSentenceText
 import com.unmute.app.domain.model.vocabularyFrom
 import com.unmute.app.domain.model.withTextAfter
@@ -84,17 +85,30 @@ class BoardViewModel(
 
     val predictionVocabulary: StateFlow<PredictionVocabulary> = combine(
         boardRepository.observeAllCards(),
+        categories,
+        selectedCategoryId,
         language,
         boardRepository.observeWordUsage(),
-    ) { cards, lang, usageEntities ->
-        val usage = usageEntities.associate { it.word to WordUsage(it.uses, it.lastUsed) }
+    ) { cards, sections, activeCategoryId, lang, usageEntities ->
+        val contextualWords = buildSet {
+            cards.filter { it.categoryId == activeCategoryId }.forEach { card ->
+                addAll(card.label(lang).splitToWords())
+                addAll(card.phrase(lang).splitToWords())
+                add(card.phrase(lang).trim().lowercase())
+            }
+            sections.firstOrNull { it.id == activeCategoryId }?.let { section ->
+                addAll(categoryName(section).splitToWords())
+            }
+        }
         PredictionVocabulary(
             words = vocabularyFrom(
                 labels = cards.map { it.label(lang) },
                 phrases = cards.map { it.phrase(lang) },
+                categories = sections.map { categoryName(it) },
                 commonWords = CommonWords.forLanguage(lang),
+                contextualWords = contextualWords,
             ),
-            usage = usage,
+            usage = usageEntities.associate { it.word to WordUsage(it.uses, it.lastUsed) },
         )
     }.stateIn(
         viewModelScope,
@@ -232,7 +246,7 @@ class BoardViewModel(
     /** Records usage of each spoken word so predictions learn from what the user says. */
     fun recordSpokenWords(text: String) {
         if (!settings.value.wordPrediction) return
-        val words = text.split(Regex("[^\\p{L}\\p{M}']+")).filter { it.isNotEmpty() }
+        val words = text.splitToWords()
         if (words.isEmpty()) return
         viewModelScope.launch { boardRepository.recordWords(words, language.value) }
     }

@@ -135,13 +135,42 @@ class WordPredictorTest {
         val words = vocabularyFrom(
             labels = listOf("Good morning"),
             phrases = listOf("I am hungry"),
+            categories = emptyList(),
             commonWords = listOf("and"),
         )
         assertTrue(VocabularyWord("good", WordTier.LABEL) in words)
         assertTrue(VocabularyWord("morning", WordTier.LABEL) in words)
-        assertTrue(VocabularyWord("i", WordTier.PHRASE) in words)
-        assertTrue(VocabularyWord("hungry", WordTier.PHRASE) in words)
+        assertTrue(VocabularyWord("i", WordTier.WORD) in words)
+        assertTrue(VocabularyWord("hungry", WordTier.WORD) in words)
+        assertTrue(VocabularyWord("I am hungry", WordTier.PHRASE) in words)
         assertTrue(VocabularyWord("and", WordTier.COMMON) in words)
+    }
+
+    @Test
+    fun `vocabularyFrom includes section names with category tier`() {
+        val words = vocabularyFrom(
+            labels = emptyList(),
+            phrases = emptyList(),
+            categories = listOf("Food", "Feelings"),
+            commonWords = emptyList(),
+        )
+        assertTrue(VocabularyWord("food", WordTier.CATEGORY) in words)
+        assertTrue(VocabularyWord("feelings", WordTier.CATEGORY) in words)
+    }
+
+    @Test
+    fun `vocabularyFrom marks contextual words`() {
+        val words = vocabularyFrom(
+            labels = listOf("camera"),
+            phrases = listOf("I want water"),
+            categories = listOf("Food"),
+            commonWords = emptyList(),
+            contextualWords = setOf("camera", "water", "i want water", "food"),
+        )
+        assertTrue(VocabularyWord("camera", WordTier.LABEL, contextual = true) in words)
+        assertTrue(VocabularyWord("water", WordTier.WORD, contextual = true) in words)
+        assertTrue(VocabularyWord("I want water", WordTier.PHRASE, contextual = true) in words)
+        assertTrue(VocabularyWord("food", WordTier.CATEGORY, contextual = true) in words)
     }
 
     @Test
@@ -149,11 +178,48 @@ class WordPredictorTest {
         val words = vocabularyFrom(
             labels = listOf("  Hello   World "),
             phrases = emptyList(),
+            categories = emptyList(),
             commonWords = listOf("a"),
         )
         assertTrue(VocabularyWord("hello", WordTier.LABEL) in words)
         assertTrue(VocabularyWord("world", WordTier.LABEL) in words)
         assertTrue(VocabularyWord("a", WordTier.COMMON) in words)
+    }
+
+    @Test
+    fun `predict matches full phrases by their first word`() {
+        val vocab = listOf(VocabularyWord("I am hungry", WordTier.PHRASE))
+        assertEquals(listOf("I am hungry"), predict("i", vocab, emptyMap(), 4))
+        assertEquals(emptyList<String>(), predict("hungry", vocab, emptyMap(), 4))
+    }
+
+    @Test
+    fun `predict boosts contextual words within the same tier`() {
+        val vocab = listOf(
+            VocabularyWord("camera", WordTier.LABEL),
+            VocabularyWord("carry", WordTier.LABEL, contextual = true),
+        )
+        val usage = mapOf("camera" to WordUsage(uses = 40, lastUsed = 0L))
+        assertEquals(listOf("carry", "camera"), predict("c", vocab, usage, 4))
+    }
+
+    @Test
+    fun `predict keeps tier dominance over context and usage`() {
+        val vocab = listOf(
+            VocabularyWord("apple", WordTier.LABEL, contextual = true),
+            VocabularyWord("ask", WordTier.CATEGORY),
+        )
+        val usage = mapOf("apple" to WordUsage(uses = 40, lastUsed = 0L))
+        assertEquals(listOf("ask", "apple"), predict("a", vocab, usage, 4))
+    }
+
+    @Test
+    fun `predict dedups a word preferring the best tier`() {
+        val vocab = listOf(
+            VocabularyWord("food", WordTier.LABEL),
+            VocabularyWord("food", WordTier.CATEGORY),
+        )
+        assertEquals(listOf("food"), predict("f", vocab, emptyMap(), 4))
     }
 
     @Test
