@@ -34,6 +34,7 @@ data class AppSettings(
     val speakSectionNames: Boolean = false,
     val showSectionSymbols: Boolean = true,
     val showSentenceCards: Boolean = false,
+    val wordPrediction: Boolean = true,
 )
 
 class SettingsRepository(private val context: Context) {
@@ -63,6 +64,7 @@ class SettingsRepository(private val context: Context) {
             speakSectionNames = prefs[KEY_SPEAK_SECTION_NAMES] ?: false,
             showSectionSymbols = prefs[KEY_SHOW_SECTION_SYMBOLS] ?: true,
             showSentenceCards = prefs[KEY_SHOW_SENTENCE_CARDS] ?: false,
+            wordPrediction = prefs[KEY_WORD_PREDICTION] ?: true,
         )
     }
 
@@ -138,6 +140,10 @@ class SettingsRepository(private val context: Context) {
         context.dataStore.edit { it[KEY_SHOW_SENTENCE_CARDS] = enabled }
     }
 
+    suspend fun setWordPrediction(enabled: Boolean) {
+        context.dataStore.edit { it[KEY_WORD_PREDICTION] = enabled }
+    }
+
     /** Overwrites every stored setting with [appSettings]. */
     suspend fun restore(appSettings: AppSettings) {
         context.dataStore.edit { prefs ->
@@ -161,6 +167,7 @@ class SettingsRepository(private val context: Context) {
             prefs[KEY_SPEAK_SECTION_NAMES] = appSettings.speakSectionNames
             prefs[KEY_SHOW_SECTION_SYMBOLS] = appSettings.showSectionSymbols
             prefs[KEY_SHOW_SENTENCE_CARDS] = appSettings.showSentenceCards
+            prefs[KEY_WORD_PREDICTION] = appSettings.wordPrediction
         }
     }
 
@@ -181,6 +188,7 @@ class SettingsRepository(private val context: Context) {
         val KEY_SPEAK_SECTION_NAMES = booleanPreferencesKey("speak_section_names")
         val KEY_SHOW_SECTION_SYMBOLS = booleanPreferencesKey("show_section_symbols")
         val KEY_SHOW_SENTENCE_CARDS = booleanPreferencesKey("show_sentence_cards")
+        val KEY_WORD_PREDICTION = booleanPreferencesKey("word_prediction")
 
         const val DEFAULT_SECURE_TAPS = 3
         const val MIN_SECURE_TAPS = 1

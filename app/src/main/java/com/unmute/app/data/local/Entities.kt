@@ -71,3 +71,14 @@ data class GridProfileEntity(
     val columns: Int,
     val isPreset: Boolean,
 )
+
+@Entity(
+    tableName = "word_usage",
+    primaryKeys = ["word", "language"],
+)
+data class WordUsageEntity(
+    val word: String,
+    val language: String,
+    val uses: Int,
+    val lastUsed: Long,
+)

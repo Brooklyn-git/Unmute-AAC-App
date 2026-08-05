@@ -72,6 +72,9 @@ interface CardDao {
     @Query("SELECT * FROM cards WHERE categoryId = :categoryId ORDER BY orderIndex")
     fun observeCards(categoryId: Long): Flow<List<CardEntity>>
 
+    @Query("SELECT * FROM cards ORDER BY orderIndex")
+    fun observeAllCards(): Flow<List<CardEntity>>
+
     @Query("SELECT * FROM cards WHERE categoryId = :categoryId ORDER BY orderIndex")
     suspend fun getCards(categoryId: Long): List<CardEntity>
 
@@ -130,4 +133,19 @@ interface GridProfileDao {
 
     @Delete
     suspend fun delete(profile: GridProfileEntity)
+}
+
+@Dao
+interface WordUsageDao {
+    @Query("SELECT * FROM word_usage")
+    fun observeAll(): Flow<List<WordUsageEntity>>
+
+    @Query(
+        """
+        INSERT INTO word_usage(word, language, uses, lastUsed)
+        VALUES(:word, :language, 1, :now)
+        ON CONFLICT(word, language) DO UPDATE SET uses = uses + 1, lastUsed = :now
+        """,
+    )
+    suspend fun record(word: String, language: String, now: Long)
 }

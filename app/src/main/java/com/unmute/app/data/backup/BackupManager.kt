@@ -273,6 +273,7 @@ class BackupManager(
         sectionLayout = sectionLayout.name,
         speakSectionNames = speakSectionNames,
         showSentenceCards = showSentenceCards,
+        wordPrediction = wordPrediction,
     )
 
     private fun BackupSettings.toAppSettings() = AppSettings(
@@ -298,5 +299,6 @@ class BackupManager(
             .getOrDefault(SectionLayout.TABS),
         speakSectionNames = speakSectionNames,
         showSentenceCards = showSentenceCards,
+        wordPrediction = wordPrediction,
     )
 }

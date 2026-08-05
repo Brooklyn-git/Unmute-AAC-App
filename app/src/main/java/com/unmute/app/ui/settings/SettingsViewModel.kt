@@ -91,6 +91,10 @@ class SettingsViewModel(
         viewModelScope.launch { settingsRepository.setShowSentenceCards(enabled) }
     }
 
+    fun setWordPrediction(enabled: Boolean) {
+        viewModelScope.launch { settingsRepository.setWordPrediction(enabled) }
+    }
+
     fun setSecureMode(enabled: Boolean) {
         viewModelScope.launch { settingsRepository.setSecureMode(enabled) }
     }

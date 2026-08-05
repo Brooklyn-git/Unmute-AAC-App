@@ -3,6 +3,7 @@ package com.unmute.app.ui.board
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -72,12 +73,17 @@ import com.unmute.app.R
 import com.unmute.app.data.local.CardEntity
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.domain.model.CardFontSize
+import com.unmute.app.domain.model.DEFAULT_PREDICTION_LIMIT
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.PredictionVocabulary
 import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.SentenceToken
+import com.unmute.app.domain.model.applySuggestion
+import com.unmute.app.domain.model.currentWordAt
 import com.unmute.app.domain.model.deleteWordBefore
 import com.unmute.app.domain.model.dropTargetIndex
 import com.unmute.app.domain.model.label
+import com.unmute.app.domain.model.predict
 import com.unmute.app.tts.TtsIssue
 import kotlinx.coroutines.delay
 
@@ -99,6 +105,7 @@ fun BoardScreen(
     val gridProfiles by viewModel.gridProfiles.collectAsStateWithLifecycle()
     val language by viewModel.language.collectAsStateWithLifecycle()
     val settings by viewModel.settings.collectAsStateWithLifecycle()
+    val predictionVocabulary by viewModel.predictionVocabulary.collectAsStateWithLifecycle()
 
     LaunchedEffect(categories) {
         if (selectedCategoryId == null && categories.isNotEmpty()) {
@@ -242,6 +249,8 @@ fun BoardScreen(
                 tokens = sentence,
                 sentenceText = sentenceText,
                 showCards = settings.showSentenceCards,
+                wordPredictionEnabled = settings.wordPrediction,
+                predictionVocabulary = predictionVocabulary,
                 onSentenceChange = viewModel::setSentence,
                 onTextChange = viewModel::updateTextAt,
                 onInsertText = viewModel::insertTextAt,
@@ -451,6 +460,8 @@ private fun SentenceBar(
     tokens: List<SentenceToken>,
     sentenceText: String,
     showCards: Boolean,
+    wordPredictionEnabled: Boolean,
+    predictionVocabulary: PredictionVocabulary,
     onSentenceChange: (String) -> Unit,
     onTextChange: (Int, String) -> Unit,
     onInsertText: (Int?, String) -> Unit,
@@ -521,87 +532,141 @@ private fun SentenceBar(
         color = MaterialTheme.colorScheme.surfaceVariant,
         tonalElevation = 3.dp,
     ) {
-        Row(
-            modifier = Modifier
-                .fillMaxWidth()
-                .padding(horizontal = 8.dp, vertical = 8.dp),
-            verticalAlignment = Alignment.CenterVertically,
-        ) {
-            if (showCards) {
-                CardSentenceInput(
-                    tokens = tokens,
-                    composingValue = composingValue,
-                    composingIndex = composingIndex,
-                    anchorIndex = anchorIndex,
-                    composingFocus = composingFocus,
-                    onComposingValueChange = {
-                        composingValue = it
-                        onInsertText(anchorIndex, it.text)
-                    },
-                    onTextChange = onTextChange,
-                    onSelectIndex = { selectedIndex = it },
-                    onRequestComposeFocus = { requestComposeFocus = true },
-                    onClearSelection = { selectedIndex = null },
-                    onMoveToken = onMoveToken,
-                    modifier = Modifier.weight(1f),
-                )
-            } else {
-                Box(modifier = Modifier.weight(1f)) {
-                    BasicTextField(
-                        value = textValue,
-                        onValueChange = {
-                            textValue = it
-                            onSentenceChange(it.text)
-                        },
-                        singleLine = true,
-                        textStyle = MaterialTheme.typography.headlineSmall.copy(
-                            color = MaterialTheme.colorScheme.onSurface,
-                        ),
-                        cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
-                        modifier = Modifier.fillMaxWidth(),
-                        decorationBox = { innerTextField ->
-                            Box(modifier = Modifier.padding(horizontal = 8.dp)) {
-                                if (textValue.text.isEmpty()) {
-                                    Text(
-                                        text = stringResource(R.string.sentence_hint),
-                                        style = MaterialTheme.typography.headlineSmall,
-                                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                                    )
-                                }
-                                innerTextField()
-                            }
-                        },
-                    )
-                }
-            }
-            IconButton(onClick = onBackspace, enabled = tokens.isNotEmpty()) {
-                Icon(
-                    Icons.AutoMirrored.Filled.Backspace,
-                    contentDescription = stringResource(R.string.remove_last),
-                )
-            }
-            IconButton(onClick = onClear, enabled = sentenceText.isNotEmpty()) {
-                Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
-            }
-            Surface(
-                onClick = onSpeak,
-                shape = RoundedCornerShape(50),
-                color = MaterialTheme.colorScheme.primary,
-                contentColor = MaterialTheme.colorScheme.onPrimary,
-                enabled = sentenceText.isNotEmpty(),
+        Column {
+            Row(
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 8.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
             ) {
-                Row(
-                    modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
-                    verticalAlignment = Alignment.CenterVertically,
-                ) {
-                    Icon(Icons.Default.VolumeUp, contentDescription = null)
-                    Text(
-                        text = stringResource(R.string.speak),
-                        style = MaterialTheme.typography.titleMedium,
-                        fontWeight = FontWeight.Bold,
-                        modifier = Modifier.padding(start = 8.dp),
+                if (showCards) {
+                    CardSentenceInput(
+                        tokens = tokens,
+                        composingValue = composingValue,
+                        composingIndex = composingIndex,
+                        anchorIndex = anchorIndex,
+                        composingFocus = composingFocus,
+                        onComposingValueChange = {
+                            composingValue = it
+                            onInsertText(anchorIndex, it.text)
+                        },
+                        onTextChange = onTextChange,
+                        onSelectIndex = { selectedIndex = it },
+                        onRequestComposeFocus = { requestComposeFocus = true },
+                        onClearSelection = { selectedIndex = null },
+                        onMoveToken = onMoveToken,
+                        modifier = Modifier.weight(1f),
+                    )
+                } else {
+                    Box(modifier = Modifier.weight(1f)) {
+                        BasicTextField(
+                            value = textValue,
+                            onValueChange = {
+                                textValue = it
+                                onSentenceChange(it.text)
+                            },
+                            singleLine = true,
+                            textStyle = MaterialTheme.typography.headlineSmall.copy(
+                                color = MaterialTheme.colorScheme.onSurface,
+                            ),
+                            cursorBrush = SolidColor(MaterialTheme.colorScheme.primary),
+                            modifier = Modifier.fillMaxWidth(),
+                            decorationBox = { innerTextField ->
+                                Box(modifier = Modifier.padding(horizontal = 8.dp)) {
+                                    if (textValue.text.isEmpty()) {
+                                        Text(
+                                            text = stringResource(R.string.sentence_hint),
+                                            style = MaterialTheme.typography.headlineSmall,
+                                            color = MaterialTheme.colorScheme.onSurfaceVariant,
+                                        )
+                                    }
+                                    innerTextField()
+                                }
+                            },
+                        )
+                    }
+                }
+                IconButton(onClick = onBackspace, enabled = tokens.isNotEmpty()) {
+                    Icon(
+                        Icons.AutoMirrored.Filled.Backspace,
+                        contentDescription = stringResource(R.string.remove_last),
                     )
                 }
+                IconButton(onClick = onClear, enabled = sentenceText.isNotEmpty()) {
+                    Icon(Icons.Default.Clear, contentDescription = stringResource(R.string.clear))
+                }
+                Surface(
+                    onClick = onSpeak,
+                    shape = RoundedCornerShape(50),
+                    color = MaterialTheme.colorScheme.primary,
+                    contentColor = MaterialTheme.colorScheme.onPrimary,
+                    enabled = sentenceText.isNotEmpty(),
+                ) {
+                    Row(
+                        modifier = Modifier.padding(horizontal = 16.dp, vertical = 10.dp),
+                        verticalAlignment = Alignment.CenterVertically,
+                    ) {
+                        Icon(Icons.Default.VolumeUp, contentDescription = null)
+                        Text(
+                            text = stringResource(R.string.speak),
+                            style = MaterialTheme.typography.titleMedium,
+                            fontWeight = FontWeight.Bold,
+                            modifier = Modifier.padding(start = 8.dp),
+                        )
+                    }
+                }
+            }
+            WordPredictionSuggestions(
+                enabled = wordPredictionEnabled && !showCards,
+                vocabulary = predictionVocabulary,
+                currentText = textValue.text,
+                caret = textValue.selection.min,
+                onSelect = { suggestion ->
+                    val (newText, newCaret) = applySuggestion(textValue.text, textValue.selection.min, suggestion)
+                    textValue = TextFieldValue(newText, TextRange(newCaret))
+                    onSentenceChange(newText)
+                },
+            )
+        }
+    }
+}
+
+@Composable
+private fun WordPredictionSuggestions(
+    enabled: Boolean,
+    vocabulary: PredictionVocabulary,
+    currentText: String,
+    caret: Int,
+    onSelect: (String) -> Unit,
+) {
+    val currentWord = currentWordAt(currentText, caret)
+    val suggestions = if (enabled && currentWord.isNotEmpty()) {
+        predict(currentWord, vocabulary.words, vocabulary.usage, DEFAULT_PREDICTION_LIMIT)
+            .filterNot { it == currentWord }
+    } else {
+        emptyList()
+    }
+    if (suggestions.isEmpty()) return
+    Row(
+        modifier = Modifier
+            .fillMaxWidth()
+            .horizontalScroll(rememberScrollState())
+            .padding(horizontal = 8.dp)
+            .padding(bottom = 8.dp),
+        horizontalArrangement = Arrangement.spacedBy(8.dp),
+    ) {
+        suggestions.forEach { suggestion ->
+            Surface(
+                onClick = { onSelect(suggestion) },
+                shape = RoundedCornerShape(50),
+                color = MaterialTheme.colorScheme.surface,
+                contentColor = MaterialTheme.colorScheme.onSurface,
+            ) {
+                Text(
+                    text = suggestion,
+                    style = MaterialTheme.typography.titleMedium,
+                    modifier = Modifier.padding(horizontal = 12.dp, vertical = 6.dp),
+                )
             }
         }
     }

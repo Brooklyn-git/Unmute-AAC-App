@@ -8,6 +8,8 @@ import com.unmute.app.data.local.CategoryDao
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileDao
 import com.unmute.app.data.local.GridProfileEntity
+import com.unmute.app.data.local.WordUsageDao
+import com.unmute.app.data.local.WordUsageEntity
 import com.unmute.app.domain.model.ImageType
 import kotlinx.coroutines.flow.Flow
 
@@ -16,6 +18,7 @@ class BoardRepository(
     private val categoryDao: CategoryDao,
     private val cardDao: CardDao,
     private val gridProfileDao: GridProfileDao,
+    private val wordUsageDao: WordUsageDao,
 ) {
     fun observeBoards(): Flow<List<BoardEntity>> = boardDao.observeBoards()
 
@@ -27,7 +30,19 @@ class BoardRepository(
     fun observeCards(categoryId: Long): Flow<List<CardEntity>> =
         cardDao.observeCards(categoryId)
 
+    fun observeAllCards(): Flow<List<CardEntity>> = cardDao.observeAllCards()
+
     fun observeGridProfiles(): Flow<List<GridProfileEntity>> = gridProfileDao.observeAll()
+
+    fun observeWordUsage(): Flow<List<WordUsageEntity>> = wordUsageDao.observeAll()
+
+    /** Records one use of each spoken word for [language], for word prediction ranking. */
+    suspend fun recordWords(words: List<String>, language: String) {
+        val now = System.currentTimeMillis()
+        words.map { it.lowercase().trim() }
+            .filter { it.isNotEmpty() }
+            .forEach { word -> wordUsageDao.record(word, language, now) }
+    }
 
     suspend fun insertCard(card: CardEntity): Long = cardDao.insert(card)
 

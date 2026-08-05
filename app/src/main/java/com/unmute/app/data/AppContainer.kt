@@ -16,6 +16,7 @@ class AppContainer(context: Context) {
         categoryDao = database.categoryDao(),
         cardDao = database.cardDao(),
         gridProfileDao = database.gridProfileDao(),
+        wordUsageDao = database.wordUsageDao(),
     )
 
     val settingsRepository = SettingsRepository(context)

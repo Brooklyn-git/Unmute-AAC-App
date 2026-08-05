@@ -10,13 +10,18 @@ import com.unmute.app.data.local.CardEntity
 import com.unmute.app.data.local.CategoryEntity
 import com.unmute.app.data.local.GridProfileEntity
 import com.unmute.app.domain.model.CardFontSize
+import com.unmute.app.domain.model.CommonWords
 import com.unmute.app.domain.model.ImageType
+import com.unmute.app.domain.model.PredictionVocabulary
 import com.unmute.app.domain.model.SectionLayout
 import com.unmute.app.domain.model.SentenceToken
+import com.unmute.app.domain.model.WordUsage
 import com.unmute.app.domain.model.label
 import com.unmute.app.domain.model.moved
+import com.unmute.app.domain.model.phrase
 import com.unmute.app.domain.model.resolveLanguage
 import com.unmute.app.domain.model.toSentenceText
+import com.unmute.app.domain.model.vocabularyFrom
 import com.unmute.app.domain.model.withTextAfter
 import com.unmute.app.domain.model.withTextAt
 import com.unmute.app.tts.TtsIssue
@@ -76,6 +81,26 @@ class BoardViewModel(
     val activeColumns: StateFlow<Int> = combine(settings, gridProfiles) { s, profiles ->
         profiles.firstOrNull { it.id == s.activeGridProfileId }?.columns ?: DEFAULT_COLUMNS
     }.stateIn(viewModelScope, SharingStarted.WhileSubscribed(5_000), DEFAULT_COLUMNS)
+
+    val predictionVocabulary: StateFlow<PredictionVocabulary> = combine(
+        boardRepository.observeAllCards(),
+        language,
+        boardRepository.observeWordUsage(),
+    ) { cards, lang, usageEntities ->
+        val usage = usageEntities.associate { it.word to WordUsage(it.uses, it.lastUsed) }
+        PredictionVocabulary(
+            words = vocabularyFrom(
+                labels = cards.map { it.label(lang) },
+                phrases = cards.map { it.phrase(lang) },
+                commonWords = CommonWords.forLanguage(lang),
+            ),
+            usage = usage,
+        )
+    }.stateIn(
+        viewModelScope,
+        SharingStarted.WhileSubscribed(5_000),
+        PredictionVocabulary(emptyList(), emptyMap()),
+    )
 
     fun selectCategory(id: Long) {
         val previous = _selectedCategoryId.value
@@ -200,7 +225,16 @@ class BoardViewModel(
         val text = _sentence.value.toSentenceText()
         if (text.isBlank()) return
         speak(text)
+        recordSpokenWords(text)
         _sentence.value = emptyList()
+    }
+
+    /** Records usage of each spoken word so predictions learn from what the user says. */
+    fun recordSpokenWords(text: String) {
+        if (!settings.value.wordPrediction) return
+        val words = text.split(Regex("[^\\p{L}\\p{M}']+")).filter { it.isNotEmpty() }
+        if (words.isEmpty()) return
+        viewModelScope.launch { boardRepository.recordWords(words, language.value) }
     }
 
     fun clearSentence() {

@@ -13,8 +13,9 @@ import androidx.sqlite.db.SupportSQLiteDatabase
         CategoryEntity::class,
         CardEntity::class,
         GridProfileEntity::class,
+        WordUsageEntity::class,
     ],
-    version = 4,
+    version = 5,
     exportSchema = true,
 )
 abstract class UnmuteDatabase : RoomDatabase() {
@@ -23,6 +24,7 @@ abstract class UnmuteDatabase : RoomDatabase() {
     abstract fun categoryDao(): CategoryDao
     abstract fun cardDao(): CardDao
     abstract fun gridProfileDao(): GridProfileDao
+    abstract fun wordUsageDao(): WordUsageDao
 
     companion object {
         private val MIGRATION_1_2 = object : Migration(1, 2) {
@@ -60,9 +62,25 @@ abstract class UnmuteDatabase : RoomDatabase() {
             }
         }
 
+        private val MIGRATION_4_5 = object : Migration(4, 5) {
+            override fun migrate(db: SupportSQLiteDatabase) {
+                db.execSQL(
+                    """
+                    CREATE TABLE IF NOT EXISTS `word_usage` (
+                        `word` TEXT NOT NULL,
+                        `language` TEXT NOT NULL,
+                        `uses` INTEGER NOT NULL,
+                        `lastUsed` INTEGER NOT NULL,
+                        PRIMARY KEY(`word`, `language`)
+                    )
+                    """.trimIndent(),
+                )
+            }
+        }
+
         fun build(context: Context): UnmuteDatabase =
             Room.databaseBuilder(context, UnmuteDatabase::class.java, "unmute.db")
-                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4)
+                .addMigrations(MIGRATION_1_2, MIGRATION_2_3, MIGRATION_3_4, MIGRATION_4_5)
                 .build()
     }
 }

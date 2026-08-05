@@ -83,6 +83,7 @@
     <string name="speech_pitch">Tono de voz</string>
     <string name="autospeak">Hablar cada palabra al añadirla</string>
     <string name="show_sentence_cards">Mostrar tarjetas en la barra de texto</string>
+    <string name="word_prediction">Predicción de palabras</string>
     <string name="test_speech">Probar voz</string>
     <string name="tts">TTS</string>
     <string name="tts_system_default">Predeterminado del sistema</string>

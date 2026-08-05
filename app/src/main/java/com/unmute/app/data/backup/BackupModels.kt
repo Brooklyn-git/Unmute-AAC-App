@@ -77,4 +77,5 @@ data class BackupSettings(
     val sectionLayout: String = "TABS",
     val speakSectionNames: Boolean = false,
     val showSentenceCards: Boolean = false,
+    val wordPrediction: Boolean = true,
 )
