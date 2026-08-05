@@ -50,8 +50,8 @@ app/src/main/java/com/unmute/app/
 - Sections can be navigated as **tabs** or a **grid** (`settings.sectionLayout`); with
   "Speak section names" enabled, tapping a section speaks its name.
 - Default sections are marked `isPreset = true` and cannot be deleted.
-- The app currently operates on a **single board**; the `boards` table is schema-ready for future
-  multi-board support.
+- The app operates on a **single board** (intentional, see `PLAN.md`); the `boards` table is part of the
+  schema but multi-board support is not planned for v1.
 
 ### Backup & restore
 

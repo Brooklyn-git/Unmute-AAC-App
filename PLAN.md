@@ -47,7 +47,7 @@ own photos). Targets both children and adults, with configurable layouts.
 - `Board (name, order)` → `Category (name_en/es, color, symbol | emoji, order, isPreset)` → `Card (label_en/es, phrase_en/es, symbolPath | photoUri | emoji, color, order)`
 - `GridProfile (name, columns, isPreset)` — "Big", "Small", plus user "Custom" profiles
 - `Settings` (DataStore): language, active grid profile, audio output, TTS engine/rate/pitch, autospeak, card font size, secure mode (tap count + reset window), section layout (tabs/grid), speak-section-names
-- First launch seeds a default board with core categories (Greetings, People, Food & Drink, Feelings, Actions, Places, Things, Body) using Mulberry symbols with EN + ES labels. The app currently uses a **single board** (the `boards` table is kept for future multi-board support).
+- First launch seeds a default board with core categories (Greetings, People, Food & Drink, Feelings, Actions, Places, Things, Body) using Mulberry symbols with EN + ES labels. The app is **single-board by design**: sections are fully customizable, and multiple boards add navigation and accident risk for AAC users without a clear v1 need. The `boards` table stays in the schema (already migrated) but is not a near-term feature.
 - Each section has a symbol (`EMOJI` or `SYMBOL`); existing installs are migrated by inheriting each
   section's first card icon (`MIGRATION_2_3`).
 
@@ -141,7 +141,7 @@ Language-aware (EN/ES).
 11. ✅ Accessible section navigation: section symbols (migration 2→3), tabs **and** grid layouts,
     speak-section-names, TalkBack-friendly large buttons, symbol picker + section editing
 12. ⏳ Text mode + word prediction (offline, language-aware) — deferred
-13. ⏳ Multi-board support (schema ready, single board used today)
+13. ~~Multi-board support~~ — **not planned for v1**; single board is intentional (see Data model). Schema remains untouched for a possible future need.
 14. ✅ About screen (version, privacy, contact email, source code, license, Mulberry attribution)
 
 ## Known risks / notes
