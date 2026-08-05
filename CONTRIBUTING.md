@@ -79,6 +79,85 @@ Follow the project conventions in `AGENTS.md` and `DEV-README.md`:
 
 ---
 
+## Translating the app
+
+Unmute is used by people who rely on AAC devices, so a good translation matters
+as much as a good feature. A language lives in four places — you can do the
+translation work alone and open a draft PR, and a maintainer (or you, if you
+feel confident) can wire up the language-selection code.
+
+### 1. UI strings
+
+- Source (English) strings live in `app/src/main/res/values/strings.xml`
+  (107 strings). Create a new folder `app/src/main/res/values-<code>/` with a
+  `strings.xml` using the **same keys**, e.g. `values-fr/strings.xml`,
+  `values-de/strings.xml`.
+- Keep the key names identical to the English file and never remove a key —
+  Android falls back to the English string for any missing one, but that's a
+  regression for that user, and lint reports it as `MissingTranslation`.
+- Preserve format placeholders exactly (`%s`, `%d`, `%1$s`), and keep
+  apostrophes escaped as `\'`.
+
+### 2. Default board content
+
+The board that ships with the app is defined in
+`app/src/main/java/com/unmute/app/data/DefaultSeed.kt` (9 sections, 89 cards).
+Every board, category and card stores **both** languages:
+
+- `boardNameEn` / `boardNameEs`, `nameEn` / `nameEs`
+- per card: `labelEn` / `labelEs` (short label shown on the tile) and
+  `phraseEn` / `phraseEs` (full sentence spoken when tapped)
+
+Each card also has `imageType`, `imageValue`, `symbolValue` and `color` —
+**do not translate those**; the symbol/emoji is the same in every language.
+For a new language you (or the wiring PR) add a `*Fr` / `*De` field next to the
+`*En` / `*Es` ones. A section or card can ship with an empty new-language field:
+it will fall back to English, which is acceptable for a first pass.
+
+Phrases should read like something the user would actually say out loud
+("I am hungry", not "hunger"), while labels stay short enough for a tile.
+
+### 3. Prediction word list
+
+Autocomplete candidates come from `app/src/main/java/com/unmute/app/domain/model/CommonWords.kt`
+(`ENGLISH`, ~700 words, and `SPANISH`, ~486 words). Add one list per language:
+
+- lowercase only (matching is case-insensitive), no duplicates
+- no words already covered by the default seed cards
+- focus on high-frequency core words an AAC user needs quickly
+- keep apostrophes inside words (`don't`), and keep accents as the language
+  requires (Spanish keeps `él`, `más`, `café` — matching is case-insensitive,
+  not accent-insensitive)
+
+### 4. Wiring up the language
+
+A translation is only *selectable* once the code knows about it. Keep
+English as the fallback language. To add a language you need to touch:
+
+- `AppLanguage` enum — `app/src/main/java/com/unmute/app/domain/model/Models.kt`
+- `resolveLanguage()` mapping to a two-letter code —
+  `app/src/main/java/com/unmute/app/domain/model/Localization.kt`
+- the `label(lang)` / `phrase(lang)` / `withEditedLabels()` helpers in the same
+  file, so they read the new fields with `ifBlank { ...En }` fallback
+- the `Locale` mapping in `MainActivity.withAppLanguage()` —
+  `app/src/main/java/com/unmute/app/MainActivity.kt`
+- the language radios — `app/src/main/java/com/unmute/app/ui/settings/SettingsScreen.kt`
+
+Existing backups load via `AppLanguage.valueOf()` and default to `SYSTEM` on
+unknown values, so old backups stay safe.
+
+### Verifying your translation
+
+- `./gradlew assembleDebug` and install on a device or emulator.
+- Switch to your language in Settings and check: app chrome, section names,
+  card labels, the sentence bar, and word predictions.
+- Confirm the fallback behaves: a card left untranslated shows English, not
+  garbage.
+- Add/extend unit tests in `app/src/test/java/com/unmute/app/domain/model/LocalizationTest.kt`
+  mirroring the Spanish cases, and run `./gradlew testDebugUnitTest`.
+
+---
+
 ## Opening a PR
 
 1. Describe what you changed and why.
