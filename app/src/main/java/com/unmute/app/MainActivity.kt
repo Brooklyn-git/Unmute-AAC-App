@@ -64,12 +64,15 @@ class MainActivity : ComponentActivity() {
             runBlocking { container.settingsRepository.settings.first().language }
         }.getOrDefault(AppLanguage.SYSTEM)
         appliedLanguage = selected
+        val deviceLocale = base.resources.configuration.locales
+            .run { if (isEmpty) Locale.getDefault() else this[0] }
         val locale = when (selected) {
-            AppLanguage.SYSTEM -> return base
+            AppLanguage.SYSTEM -> deviceLocale
             AppLanguage.EN -> Locale.ENGLISH
             AppLanguage.ES -> Locale("es")
         }
         Locale.setDefault(locale)
+        if (selected == AppLanguage.SYSTEM) return base
         val config = Configuration(base.resources.configuration)
         config.setLocale(locale)
         return base.createConfigurationContext(config)
