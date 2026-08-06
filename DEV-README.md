@@ -87,6 +87,28 @@ and backup serialization round-trips (including legacy-backup compatibility).
 
 ---
 
+## Releasing
+
+- The release variant is signed with a dedicated keystore that is **never committed**. Path and
+  credentials come from env vars (`UNMUTE_KEYSTORE`, `UNMUTE_KEYSTORE_PASSWORD`, `UNMUTE_KEY_ALIAS`,
+  `UNMUTE_KEY_PASSWORD`); without them, `assembleRelease` falls back to the debug key so local builds
+  still work. F-Droid rebuilds and re-signs from source, so it never needs the keystore.
+- Keep the keystore and its password safe and backed up — losing them means installed copies can
+  never be updated (Android requires the signature to match on upgrade).
+- To build a signed release:
+
+  ```bash
+  export UNMUTE_KEYSTORE=/path/to/unmute-release.jks
+  export UNMUTE_KEYSTORE_PASSWORD=...
+  export UNMUTE_KEY_ALIAS=unmute
+  export UNMUTE_KEY_PASSWORD=...
+  ./gradlew assembleRelease
+  ```
+
+  The signed APK lands at `app/build/outputs/apk/release/app-release.apk`.
+
+---
+
 ## Conventions
 
 - Code should be idiomatic, readable, and follow KISS / DRY.

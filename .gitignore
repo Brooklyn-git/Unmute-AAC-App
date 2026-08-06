@@ -9,3 +9,6 @@ local.properties
 .cxx
 # Mulberry release zip — downloaded by tools/mulberry/bundle_symbols.sh
 tools/mulberry/mulberry-symbols.zip
+# Release signing keystore — never commit
+*.jks
+*.keystore

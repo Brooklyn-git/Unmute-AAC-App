@@ -23,9 +23,26 @@ android {
         }
     }
 
+    signingConfigs {
+        create("release") {
+            val keystore = System.getenv("UNMUTE_KEYSTORE")
+            if (keystore != null) {
+                storeFile = file(keystore)
+                storePassword = System.getenv("UNMUTE_KEYSTORE_PASSWORD")
+                keyAlias = System.getenv("UNMUTE_KEY_ALIAS")
+                keyPassword = System.getenv("UNMUTE_KEY_PASSWORD")
+            }
+        }
+    }
+
     buildTypes {
         release {
             isMinifyEnabled = false
+            signingConfig = if (System.getenv("UNMUTE_KEYSTORE") != null) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
             proguardFiles(
                 getDefaultProguardFile("proguard-android-optimize.txt"),
                 "proguard-rules.pro",
