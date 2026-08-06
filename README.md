@@ -1,4 +1,6 @@
-# <img src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/app/src/main/res/drawable-nodpi/ic_launcher_fg_logo.png width=40> Unmute
+# Unmute
+
+<img width=100 src=https://github.com/Brooklyn-git/Unmute-AAC-App/blob/main/app/src/main/res/drawable-nodpi/ic_launcher_fg_logo.png align=left style=margin-right:15px>
 
 **Unmute is a fully offline, multilingual communication app for Android.**
 
