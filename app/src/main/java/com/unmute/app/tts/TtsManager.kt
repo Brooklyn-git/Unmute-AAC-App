@@ -29,6 +29,29 @@ import kotlinx.coroutines.flow.first
 import kotlinx.coroutines.withContext
 import kotlinx.coroutines.withTimeoutOrNull
 
+/**
+ * Groups audio device types that describe the same physical output so that a single
+ * connection (e.g. a wired headset or a USB audio device) is offered once. Android can
+ * report one physical device as several [AudioDeviceInfo] entries with different ids,
+ * such as both `TYPE_WIRED_HEADSET` and `TYPE_WIRED_HEADPHONES`.
+ */
+internal fun outputDedupKey(type: Int, productName: String?): String =
+    when (type) {
+        AudioDeviceInfo.TYPE_WIRED_HEADSET,
+        AudioDeviceInfo.TYPE_WIRED_HEADPHONES,
+        -> "wired"
+
+        AudioDeviceInfo.TYPE_USB_HEADSET,
+        AudioDeviceInfo.TYPE_USB_DEVICE,
+        -> "usb"
+
+        AudioDeviceInfo.TYPE_BLUETOOTH_A2DP,
+        AudioDeviceInfo.TYPE_BLUETOOTH_SCO,
+        -> "bluetooth:${productName.orEmpty()}"
+
+        else -> "type:$type"
+    }
+
 enum class TtsIssue { UNAVAILABLE, SPEAK_FAILED }
 
 /**
@@ -117,8 +140,8 @@ class TtsManager(
         val devices = audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS).orEmpty()
         return devices
             .filter { it.type in SUPPORTED_DEVICE_TYPES }
+            .distinctBy { outputDedupKey(it.type, it.productName?.toString()) }
             .map { it.id.toString() to deviceLabel(it) }
-            .distinctBy { it.first }
             .sortedBy { (id, _) -> if (id == builtInSpeakerId()) 0 else 1 }
     }
 
