@@ -617,14 +617,22 @@ private fun SentenceBar(
                 }
             }
             WordPredictionSuggestions(
-                enabled = wordPredictionEnabled && !showCards,
+                enabled = wordPredictionEnabled,
                 vocabulary = predictionVocabulary,
-                currentText = textValue.text,
-                caret = textValue.selection.min,
+                currentText = if (showCards) composingValue.text else textValue.text,
+                caret = if (showCards) composingValue.selection.min else textValue.selection.min,
                 onSelect = { suggestion ->
-                    val (newText, newCaret) = applySuggestion(textValue.text, textValue.selection.min, suggestion)
-                    textValue = TextFieldValue(newText, TextRange(newCaret))
-                    onSentenceChange(newText)
+                    if (showCards) {
+                        val (newText, newCaret) =
+                            applySuggestion(composingValue.text, composingValue.selection.min, suggestion)
+                        composingValue = TextFieldValue(newText, TextRange(newCaret))
+                        onInsertText(anchorIndex, newText)
+                    } else {
+                        val (newText, newCaret) =
+                            applySuggestion(textValue.text, textValue.selection.min, suggestion)
+                        textValue = TextFieldValue(newText, TextRange(newCaret))
+                        onSentenceChange(newText)
+                    }
                 },
             )
         }
