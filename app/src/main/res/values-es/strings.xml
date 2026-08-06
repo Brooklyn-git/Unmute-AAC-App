@@ -5,6 +5,8 @@
     <string name="settings">Ajustes</string>
     <string name="back">Atrás</string>
 
+    <string name="general">General</string>
+
     <string name="language">Idioma</string>
     <string name="language_system">Sistema</string>
     <string name="language_english">Inglés</string>

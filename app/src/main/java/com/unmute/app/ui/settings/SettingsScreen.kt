@@ -30,7 +30,6 @@ import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
 import androidx.compose.material3.OutlinedTextField
-import androidx.compose.material3.RadioButton
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Slider
 import androidx.compose.material3.SnackbarHost
@@ -148,42 +147,60 @@ fun SettingsScreen(
                 .fillMaxSize()
                 .padding(innerPadding),
         ) {
-            item { SectionHeader(stringResource(R.string.language)) }
-            item {
-                LanguageRow(
-                    label = stringResource(R.string.language_system),
-                    selected = settings.language == AppLanguage.SYSTEM,
-                    onClick = { viewModel.setLanguage(AppLanguage.SYSTEM) },
-                )
-                LanguageRow(
-                    label = stringResource(R.string.language_english),
-                    selected = settings.language == AppLanguage.EN,
-                    onClick = { viewModel.setLanguage(AppLanguage.EN) },
-                )
-                LanguageRow(
-                    label = stringResource(R.string.language_spanish),
-                    selected = settings.language == AppLanguage.ES,
-                    onClick = { viewModel.setLanguage(AppLanguage.ES) },
-                )
-            }
-
-            item { SectionHeader(stringResource(R.string.sections)) }
+            item { SectionHeader(stringResource(R.string.general)) }
             item {
                 Column {
-                    LanguageRow(
-                        label = stringResource(R.string.section_layout_tabs),
-                        selected = settings.sectionLayout == SectionLayout.TABS,
-                        onClick = { viewModel.setSectionLayout(SectionLayout.TABS) },
+                    SettingsDropdown(
+                        label = stringResource(R.string.language),
+                        currentLabel = when (settings.language) {
+                            AppLanguage.SYSTEM -> stringResource(R.string.language_system)
+                            AppLanguage.EN -> stringResource(R.string.language_english)
+                            AppLanguage.ES -> stringResource(R.string.language_spanish)
+                        },
+                        options = AppLanguage.entries,
+                        optionLabel = { language ->
+                            when (language) {
+                                AppLanguage.SYSTEM -> stringResource(R.string.language_system)
+                                AppLanguage.EN -> stringResource(R.string.language_english)
+                                AppLanguage.ES -> stringResource(R.string.language_spanish)
+                            }
+                        },
+                        onSelect = viewModel::setLanguage,
                     )
-                    LanguageRow(
-                        label = stringResource(R.string.section_layout_grid),
-                        selected = settings.sectionLayout == SectionLayout.GRID,
-                        onClick = { viewModel.setSectionLayout(SectionLayout.GRID) },
+                    SettingsDropdown(
+                        label = stringResource(R.string.sections),
+                        currentLabel = when (settings.sectionLayout) {
+                            SectionLayout.TABS -> stringResource(R.string.section_layout_tabs)
+                            SectionLayout.GRID -> stringResource(R.string.section_layout_grid)
+                        },
+                        options = SectionLayout.entries,
+                        optionLabel = { layout ->
+                            when (layout) {
+                                SectionLayout.TABS -> stringResource(R.string.section_layout_tabs)
+                                SectionLayout.GRID -> stringResource(R.string.section_layout_grid)
+                            }
+                        },
+                        onSelect = viewModel::setSectionLayout,
+                    )
+                    ToggleRow(
+                        label = stringResource(R.string.word_prediction),
+                        checked = settings.wordPrediction,
+                        onCheckedChange = viewModel::setWordPrediction,
+                    )
+                    ToggleRow(
+                        label = stringResource(R.string.show_sentence_cards),
+                        checked = settings.showSentenceCards,
+                        onCheckedChange = viewModel::setShowSentenceCards,
                     )
                     ToggleRow(
                         label = stringResource(R.string.speak_section_names),
                         checked = settings.speakSectionNames,
                         onCheckedChange = viewModel::setSpeakSectionNames,
+                    )
+                    ToggleRow(
+                        label = stringResource(R.string.autospeak),
+                        checked = settings.autospeak,
+                        onCheckedChange = viewModel::setAutospeak,
                     )
                     if (settings.sectionLayout == SectionLayout.TABS) {
                         ToggleRow(
@@ -193,6 +210,18 @@ fun SettingsScreen(
                         )
                     }
                 }
+            }
+
+            item { SectionHeader(stringResource(R.string.audio_output)) }
+            item {
+                val outputs = viewModel.availableOutputs()
+                SettingsDropdown(
+                    label = stringResource(R.string.audio_output),
+                    currentLabel = audioOutputLabel(settings.audioOutput, outputs),
+                    options = listOf(AudioOutputIds.AUTO) + outputs.map { it.first },
+                    optionLabel = { id -> audioOutputLabel(id, outputs) },
+                    onSelect = viewModel::setAudioOutput,
+                )
             }
 
             item { SectionHeader(stringResource(R.string.secure_mode)) }
@@ -231,9 +260,18 @@ fun SettingsScreen(
 
             item { SectionHeader(stringResource(R.string.speech)) }
             item {
-                TtsEngineDropdown(
-                    engines = ttsEngines,
+                val ttsOptions = listOf(null as String?) + ttsEngines.map { it.first }
+                SettingsDropdown(
+                    label = stringResource(R.string.tts),
                     currentLabel = ttsEngineLabel ?: stringResource(R.string.tts_system_default),
+                    options = ttsOptions,
+                    optionLabel = { packageName ->
+                        if (packageName == null) {
+                            stringResource(R.string.tts_system_default)
+                        } else {
+                            ttsEngines.firstOrNull { it.first == packageName }?.second ?: packageName
+                        }
+                    },
                     onSelect = { packageName ->
                         viewModel.selectTtsEngine(packageName)
                         ttsEngineLabel = viewModel.ttsEngineLabel()
@@ -246,21 +284,6 @@ fun SettingsScreen(
                 SpeechPitchRow(
                     pitch = settings.speechPitch,
                     onPitchChange = viewModel::setSpeechPitch,
-                )
-                ToggleRow(
-                    label = stringResource(R.string.autospeak),
-                    checked = settings.autospeak,
-                    onCheckedChange = viewModel::setAutospeak,
-                )
-                ToggleRow(
-                    label = stringResource(R.string.show_sentence_cards),
-                    checked = settings.showSentenceCards,
-                    onCheckedChange = viewModel::setShowSentenceCards,
-                )
-                ToggleRow(
-                    label = stringResource(R.string.word_prediction),
-                    checked = settings.wordPrediction,
-                    onCheckedChange = viewModel::setWordPrediction,
                 )
                 Button(
                     onClick = viewModel::testSpeech,
@@ -276,34 +299,17 @@ fun SettingsScreen(
                 }
             }
 
-            item { SectionHeader(stringResource(R.string.audio_output)) }
-            item {
-                val outputs = viewModel.availableOutputs()
-                AudioOutputRow(
-                    label = stringResource(R.string.audio_output_auto),
-                    selected = settings.audioOutput == AudioOutputIds.AUTO,
-                    onClick = { viewModel.setAudioOutput(AudioOutputIds.AUTO) },
-                )
-                outputs.forEach { (id, name) ->
-                    AudioOutputRow(
-                        label = name,
-                        selected = settings.audioOutput == id,
-                        onClick = { viewModel.setAudioOutput(id) },
-                    )
-                }
-            }
-
             item { SectionHeader(stringResource(R.string.data)) }
             item {
-                Column(
+                Row(
                     modifier = Modifier
                         .fillMaxWidth()
                         .padding(horizontal = 16.dp, vertical = 8.dp),
-                    verticalArrangement = Arrangement.spacedBy(8.dp),
+                    horizontalArrangement = Arrangement.spacedBy(8.dp),
                 ) {
                     Button(
                         onClick = { exportLauncher.launch(exportFileName) },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Default.Upload, contentDescription = null)
                         Text(
@@ -315,7 +321,7 @@ fun SettingsScreen(
                         onClick = {
                             importLauncher.launch(arrayOf("application/zip", "application/octet-stream"))
                         },
-                        modifier = Modifier.fillMaxWidth(),
+                        modifier = Modifier.weight(1f),
                     ) {
                         Icon(Icons.Default.Download, contentDescription = null)
                         Text(
@@ -399,28 +405,12 @@ private fun SectionHeader(text: String) {
 }
 
 @Composable
-private fun LanguageRow(
+private fun <T> SettingsDropdown(
     label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
-    }
-}
-
-@Composable
-private fun TtsEngineDropdown(
-    engines: List<Pair<String, String>>,
     currentLabel: String,
-    onSelect: (String?) -> Unit,
+    options: List<T>,
+    optionLabel: @Composable (T) -> String,
+    onSelect: (T) -> Unit,
 ) {
     var expanded by remember { mutableStateOf(false) }
     Box(modifier = Modifier
@@ -430,7 +420,7 @@ private fun TtsEngineDropdown(
             value = currentLabel,
             onValueChange = {},
             readOnly = true,
-            label = { Text(stringResource(R.string.tts)) },
+            label = { Text(label) },
             trailingIcon = {
                 Icon(Icons.Default.ArrowDropDown, contentDescription = null)
             },
@@ -441,19 +431,12 @@ private fun TtsEngineDropdown(
             onDismissRequest = { expanded = false },
             modifier = Modifier.fillMaxWidth(),
         ) {
-            DropdownMenuItem(
-                text = { Text(stringResource(R.string.tts_system_default)) },
-                onClick = {
-                    expanded = false
-                    onSelect(null)
-                },
-            )
-            engines.forEach { (packageName, name) ->
+            options.forEach { option ->
                 DropdownMenuItem(
-                    text = { Text(name) },
+                    text = { Text(optionLabel(option)) },
                     onClick = {
                         expanded = false
-                        onSelect(packageName)
+                        onSelect(option)
                     },
                 )
             }
@@ -530,22 +513,12 @@ private fun ToggleRow(
 }
 
 @Composable
-private fun AudioOutputRow(
-    label: String,
-    selected: Boolean,
-    onClick: () -> Unit,
-) {
-    Row(
-        modifier = Modifier
-            .fillMaxWidth()
-            .clickable(onClick = onClick)
-            .padding(horizontal = 8.dp, vertical = 4.dp),
-        verticalAlignment = Alignment.CenterVertically,
-    ) {
-        RadioButton(selected = selected, onClick = onClick)
-        Text(text = label, style = MaterialTheme.typography.bodyLarge)
+private fun audioOutputLabel(id: String, outputs: List<Pair<String, String>>): String =
+    if (id == AudioOutputIds.AUTO) {
+        stringResource(R.string.audio_output_auto)
+    } else {
+        outputs.firstOrNull { it.first == id }?.second ?: id
     }
-}
 
 @Composable
 private fun SpeechRateRow(rate: Float, onRateChange: (Float) -> Unit) {
