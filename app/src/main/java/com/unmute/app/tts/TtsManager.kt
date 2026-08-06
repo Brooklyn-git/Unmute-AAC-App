@@ -249,16 +249,16 @@ class TtsManager(
     }
 
     private fun resolvePreferredDevice(outputId: String): AudioDeviceInfo? {
-        if (outputId == AudioOutputIds.AUTO) return null
+        if (outputId == AudioOutputIds.AUTO) return builtInSpeaker()
         val devices = audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS).orEmpty()
         return devices.firstOrNull { it.id.toString() == outputId }
     }
 
-    private fun builtInSpeakerId(): String? =
+    private fun builtInSpeaker(): AudioDeviceInfo? =
         audioManager?.getDevices(AudioManager.GET_DEVICES_OUTPUTS)
             ?.firstOrNull { it.type == AudioDeviceInfo.TYPE_BUILTIN_SPEAKER }
-            ?.id
-            ?.toString()
+
+    private fun builtInSpeakerId(): String? = builtInSpeaker()?.id?.toString()
 
     private fun deviceLabel(device: AudioDeviceInfo): String =
         runCatching { device.productName?.toString()?.takeIf { it.isNotBlank() } }
