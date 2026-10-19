@@ -280,6 +280,7 @@ fun BoardScreen(
                         categories = categories,
                         selectedCategoryId = effectiveCategoryId,
                         language = language,
+                        cardFontSize = settings.cardFontSize,
                         onSelect = viewModel::selectCategory,
                         onReorder = viewModel::reorderCategories,
                         onDeleteCategory = viewModel::deleteCategory,
@@ -320,6 +321,8 @@ fun BoardScreen(
                             selectedCategoryId = effectiveCategoryId,
                             language = language,
                             editable = editMode,
+                            columns = columns,
+                            cardFontSize = settings.cardFontSize,
                             onSelect = { id ->
                                 viewModel.selectCategory(id)
                                 showSections = false

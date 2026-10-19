@@ -29,9 +29,11 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import com.unmute.app.R
 import com.unmute.app.data.local.CategoryEntity
+import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.label
 
 @Composable
@@ -40,14 +42,17 @@ fun SectionGrid(
     selectedCategoryId: Long?,
     language: String,
     editable: Boolean,
+    columns: Int,
+    cardFontSize: CardFontSize,
     onSelect: (Long) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
     onEditCategory: (CategoryEntity) -> Unit,
     onAddSection: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
+    val labelFontSize = cardFontSize.labelTextSize
     LazyVerticalGrid(
-        columns = GridCells.Adaptive(minSize = 96.dp),
+        columns = GridCells.Fixed(columns),
         contentPadding = PaddingValues(8.dp),
         horizontalArrangement = Arrangement.spacedBy(8.dp),
         verticalArrangement = Arrangement.spacedBy(8.dp),
@@ -60,6 +65,7 @@ fun SectionGrid(
                     category = category,
                     selected = selected,
                     language = language,
+                    labelFontSize = labelFontSize,
                     onClick = { onSelect(category.id) },
                 )
                 if (editable) {
@@ -100,7 +106,7 @@ fun SectionGrid(
         }
         if (editable) {
             item(key = "add_section") {
-                AddSectionGridItem(onClick = onAddSection)
+                AddSectionGridItem(labelFontSize = labelFontSize, onClick = onAddSection)
             }
         }
     }
@@ -111,6 +117,7 @@ private fun SectionGridItem(
     category: CategoryEntity,
     selected: Boolean,
     language: String,
+    labelFontSize: TextUnit,
     onClick: () -> Unit,
 ) {
     val color = Color(category.color)
@@ -135,6 +142,7 @@ private fun SectionGridItem(
                 text = category.label(language),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
+                fontSize = labelFontSize,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 modifier = Modifier.padding(top = 4.dp),
@@ -144,7 +152,7 @@ private fun SectionGridItem(
 }
 
 @Composable
-private fun AddSectionGridItem(onClick: () -> Unit) {
+private fun AddSectionGridItem(labelFontSize: TextUnit, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(16.dp),
@@ -163,6 +171,7 @@ private fun AddSectionGridItem(onClick: () -> Unit) {
                 text = stringResource(R.string.add_section),
                 style = MaterialTheme.typography.labelLarge,
                 fontWeight = FontWeight.Bold,
+                fontSize = labelFontSize,
                 textAlign = TextAlign.Center,
                 maxLines = 2,
                 modifier = Modifier.padding(top = 4.dp),

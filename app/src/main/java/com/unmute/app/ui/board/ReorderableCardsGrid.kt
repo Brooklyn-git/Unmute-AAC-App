@@ -33,7 +33,6 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.unit.dp
-import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.unmute.app.R
 import com.unmute.app.data.local.CardEntity
@@ -166,13 +165,7 @@ fun ReorderableCardsGrid(
                         label = card.label(language),
                         accentColor = accentColor,
                         language = language,
-                        labelFontSize = when (cardFontSize) {
-                            CardFontSize.EXTRA_SMALL -> 12.sp
-                            CardFontSize.SMALL -> 14.sp
-                            CardFontSize.NORMAL -> 16.sp
-                            CardFontSize.LARGE -> 20.sp
-                            CardFontSize.EXTRA_LARGE -> 24.sp
-                        },
+                        labelFontSize = cardFontSize.labelTextSize,
                         shortcutCategory = card.shortcutCategoryId
                             ?.let { id -> categories.firstOrNull { it.id == id } },
                         onClick = { if (editMode) onEditCard(card) else onCardClick(card) },

@@ -35,11 +35,13 @@ import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.res.stringResource
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.unit.TextUnit
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.compose.ui.zIndex
 import com.unmute.app.R
 import com.unmute.app.data.local.CategoryEntity
+import com.unmute.app.domain.model.CardFontSize
 import com.unmute.app.domain.model.label
 
 private const val EDGE_SCROLL_MARGIN_DP = 32
@@ -50,6 +52,7 @@ fun ReorderableCategoryTabs(
     categories: List<CategoryEntity>,
     selectedCategoryId: Long?,
     language: String,
+    cardFontSize: CardFontSize,
     onSelect: (Long) -> Unit,
     onReorder: (List<CategoryEntity>) -> Unit,
     onDeleteCategory: (CategoryEntity) -> Unit,
@@ -61,6 +64,7 @@ fun ReorderableCategoryTabs(
 ) {
     val listState = rememberLazyListState()
     val density = LocalDensity.current
+    val labelFontSize = cardFontSize.labelTextSize
     var displayCategories by remember { mutableStateOf(categories) }
     var draggingCategoryId by remember { mutableStateOf<Long?>(null) }
     var dragOffset by remember { mutableStateOf(0f) }
@@ -143,6 +147,7 @@ fun ReorderableCategoryTabs(
                         color = Color(category.color),
                         selected = selected,
                         language = language,
+                        labelFontSize = labelFontSize,
                         showSymbol = showSymbols && category.symbolValue.isNotBlank(),
                         onClick = { onSelect(category.id) },
                     )
@@ -185,14 +190,14 @@ fun ReorderableCategoryTabs(
         }
         if (editable) {
             item(key = "add_section") {
-                AddSectionChip(onClick = onAddSection)
+                AddSectionChip(labelFontSize = labelFontSize, onClick = onAddSection)
             }
         }
     }
 }
 
 @Composable
-private fun AddSectionChip(onClick: () -> Unit) {
+private fun AddSectionChip(labelFontSize: TextUnit, onClick: () -> Unit) {
     Surface(
         onClick = onClick,
         shape = RoundedCornerShape(50),
@@ -212,6 +217,7 @@ private fun AddSectionChip(onClick: () -> Unit) {
                 text = stringResource(R.string.add_section),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = FontWeight.Bold,
+                fontSize = labelFontSize,
                 color = MaterialTheme.colorScheme.primary,
                 modifier = Modifier.padding(start = 8.dp),
             )
@@ -225,6 +231,7 @@ private fun CategoryChip(
     color: Color,
     selected: Boolean,
     language: String,
+    labelFontSize: TextUnit,
     showSymbol: Boolean,
     onClick: () -> Unit,
 ) {
@@ -248,6 +255,7 @@ private fun CategoryChip(
                 text = category.label(language),
                 style = MaterialTheme.typography.titleMedium,
                 fontWeight = if (selected) FontWeight.Bold else FontWeight.Medium,
+                fontSize = labelFontSize,
                 modifier = Modifier.padding(start = if (showSymbol) 6.dp else 0.dp),
             )
         }
