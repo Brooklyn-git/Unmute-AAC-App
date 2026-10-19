@@ -12,6 +12,7 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.saveable.rememberSaveableStateHolder
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -88,9 +89,10 @@ private fun AppNavigation() {
         AppViewModelFactory.from(context.applicationContext as UnmuteApplication)
     }
     var screen by rememberSaveable { mutableStateOf<AppScreen>(AppScreen.Board) }
+    val stateHolder = rememberSaveableStateHolder()
 
     when (screen) {
-        AppScreen.Board -> {
+        AppScreen.Board -> stateHolder.SaveableStateProvider(AppScreen.Board.name) {
             val boardViewModel: BoardViewModel = viewModel(factory = factory)
             BoardScreen(
                 viewModel = boardViewModel,
@@ -99,12 +101,16 @@ private fun AppNavigation() {
             )
         }
 
-        AppScreen.Settings -> SettingsScreen(
-            viewModel = viewModel(factory = factory),
-            onBack = { screen = AppScreen.Board },
-            onOpenAbout = { screen = AppScreen.About },
-        )
+        AppScreen.Settings -> stateHolder.SaveableStateProvider(AppScreen.Settings.name) {
+            SettingsScreen(
+                viewModel = viewModel(factory = factory),
+                onBack = { screen = AppScreen.Board },
+                onOpenAbout = { screen = AppScreen.About },
+            )
+        }
 
-        AppScreen.About -> AboutScreen(onBack = { screen = AppScreen.Settings })
+        AppScreen.About -> stateHolder.SaveableStateProvider(AppScreen.About.name) {
+            AboutScreen(onBack = { screen = AppScreen.Settings })
+        }
     }
 }
