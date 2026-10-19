@@ -1,5 +1,6 @@
 package com.unmute.app.ui.board
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.BorderStroke
 import androidx.compose.foundation.gestures.detectDragGesturesAfterLongPress
 import androidx.compose.foundation.horizontalScroll
@@ -125,6 +126,11 @@ fun BoardScreen(
     var lockPressCount by rememberSaveable { mutableStateOf(0) }
     var showSecureHint by remember { mutableStateOf(false) }
     var showSections by rememberSaveable { mutableStateOf(true) }
+    BackHandler(
+        enabled = settings.sectionLayout == SectionLayout.GRID && !showSections,
+    ) {
+        showSections = true
+    }
     LaunchedEffect(settings.secureMode) {
         if (settings.secureMode) {
             secureUnlocked = false
