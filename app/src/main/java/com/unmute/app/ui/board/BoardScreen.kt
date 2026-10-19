@@ -27,7 +27,6 @@ import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.LockOpen
 import androidx.compose.material.icons.filled.Settings
 import androidx.compose.material.icons.filled.VolumeUp
-import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
 import androidx.compose.material3.MaterialTheme
@@ -36,8 +35,6 @@ import androidx.compose.material3.SnackbarHost
 import androidx.compose.material3.SnackbarHostState
 import androidx.compose.material3.Surface
 import androidx.compose.material3.Text
-import androidx.compose.material3.TopAppBar
-import androidx.compose.material3.TopAppBarDefaults
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
@@ -88,7 +85,6 @@ import com.unmute.app.domain.model.predict
 import com.unmute.app.tts.TtsIssue
 import kotlinx.coroutines.delay
 
-@OptIn(ExperimentalMaterial3Api::class)
 @Composable
 fun BoardScreen(
     viewModel: BoardViewModel,
@@ -126,9 +122,9 @@ fun BoardScreen(
     var lockPressCount by rememberSaveable { mutableStateOf(0) }
     var showSecureHint by remember { mutableStateOf(false) }
     var showSections by rememberSaveable { mutableStateOf(true) }
-    BackHandler(
-        enabled = settings.sectionLayout == SectionLayout.GRID && !showSections,
-    ) {
+    val inSection =
+        settings.sectionLayout == SectionLayout.GRID && !showSections && categories.isNotEmpty()
+    BackHandler(enabled = inSection) {
         showSections = true
     }
     LaunchedEffect(settings.secureMode) {
@@ -205,46 +201,6 @@ fun BoardScreen(
 
     Scaffold(
         snackbarHost = { SnackbarHost(snackbarHostState) },
-        topBar = {
-            TopAppBar(
-                title = {
-                    Text(
-                        text = board?.label(language) ?: "",
-                        fontSize = 22.sp,
-                        fontWeight = FontWeight.Bold,
-                    )
-                },
-                actions = {
-                    if (editMode && unlocked) {
-                        IconButton(onClick = { showGridEditor = true }) {
-                            Icon(
-                                Icons.Default.GridView,
-                                contentDescription = stringResource(R.string.grid_layout),
-                            )
-                        }
-                    }
-                    IconButton(onClick = onLockClick) {
-                        Icon(
-                            if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
-                            contentDescription = stringResource(
-                                if (editMode) R.string.done_editing else R.string.edit_board,
-                            ),
-                        )
-                    }
-                    if (unlocked) {
-                        IconButton(onClick = onOpenSettings) {
-                            Icon(
-                                Icons.Default.Settings,
-                                contentDescription = stringResource(R.string.settings),
-                            )
-                        }
-                    }
-                },
-                colors = TopAppBarDefaults.topAppBarColors(
-                    containerColor = MaterialTheme.colorScheme.surface,
-                ),
-            )
-        },
     ) { innerPadding ->
         Column(
             modifier = Modifier
@@ -266,6 +222,58 @@ fun BoardScreen(
                 onSpeak = viewModel::speakSentence,
                 onClear = viewModel::clearSentence,
             )
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                modifier = Modifier
+                    .fillMaxWidth()
+                    .padding(horizontal = 4.dp),
+            ) {
+                if (inSection) {
+                    IconButton(onClick = { showSections = true }) {
+                        Icon(
+                            Icons.AutoMirrored.Filled.ArrowBack,
+                            contentDescription = stringResource(R.string.back_to_sections),
+                        )
+                    }
+                }
+                Text(
+                    text = if (inSection) {
+                        selectedCategory?.label(language) ?: ""
+                    } else {
+                        board?.label(language) ?: ""
+                    },
+                    fontSize = 22.sp,
+                    fontWeight = FontWeight.Bold,
+                    maxLines = 1,
+                    modifier = Modifier
+                        .weight(1f)
+                        .padding(start = if (inSection) 0.dp else 12.dp),
+                )
+                if (editMode && unlocked) {
+                    IconButton(onClick = { showGridEditor = true }) {
+                        Icon(
+                            Icons.Default.GridView,
+                            contentDescription = stringResource(R.string.grid_layout),
+                        )
+                    }
+                }
+                IconButton(onClick = onLockClick) {
+                    Icon(
+                        if (editMode) Icons.Default.LockOpen else Icons.Default.Lock,
+                        contentDescription = stringResource(
+                            if (editMode) R.string.done_editing else R.string.edit_board,
+                        ),
+                    )
+                }
+                if (unlocked) {
+                    IconButton(onClick = onOpenSettings) {
+                        Icon(
+                            Icons.Default.Settings,
+                            contentDescription = stringResource(R.string.settings),
+                        )
+                    }
+                }
+            }
             when (settings.sectionLayout) {
                 SectionLayout.TABS -> {
                     ReorderableCategoryTabs(
@@ -322,25 +330,6 @@ fun BoardScreen(
                             modifier = Modifier.weight(1f),
                         )
                     } else {
-                        Row(
-                            verticalAlignment = Alignment.CenterVertically,
-                            modifier = Modifier
-                                .fillMaxWidth()
-                                .padding(horizontal = 4.dp),
-                        ) {
-                            IconButton(onClick = { showSections = true }) {
-                                Icon(
-                                    Icons.AutoMirrored.Filled.ArrowBack,
-                                    contentDescription = stringResource(R.string.back_to_sections),
-                                )
-                            }
-                            Text(
-                                text = selectedCategory?.label(language) ?: "",
-                                style = MaterialTheme.typography.titleLarge,
-                                fontWeight = FontWeight.Bold,
-                                maxLines = 1,
-                            )
-                        }
                         if (cards.isEmpty() && !editMode) {
                             EmptyState()
                         } else {
