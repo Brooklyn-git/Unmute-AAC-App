@@ -3,6 +3,7 @@ package com.unmute.app.ui.settings
 import android.content.Context
 import android.content.Intent
 import android.net.Uri
+import androidx.activity.compose.BackHandler
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
@@ -42,6 +43,7 @@ private const val MULBERRY_URL = "https://mulberrysymbols.org"
 @Composable
 fun AboutScreen(onBack: () -> Unit) {
     val context = LocalContext.current
+    BackHandler(onBack = onBack)
 
     Scaffold(
         topBar = {
